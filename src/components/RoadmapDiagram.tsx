@@ -32,18 +32,22 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
   }, [nodes]);
 
   // Calculate node positions in a circle
+  const size = 650;
+  const center = size / 2;
+  const radius = 220;
+
   const positions = useMemo(() => {
     return nodes.map((_, i) => {
       const angle = (i / nodeCount) * Math.PI * 2 - Math.PI / 2;
       return {
-        x: Math.cos(angle) * 200 + 300,
-        y: Math.sin(angle) * 200 + 300,
+        x: Math.cos(angle) * radius + center,
+        y: Math.sin(angle) * radius + center,
       };
     });
-  }, [nodeCount, nodes]);
+  }, [nodeCount, nodes, radius, center]);
 
-  const centerX = 300;
-  const centerY = 300;
+  const centerX = center;
+  const centerY = center;
 
   return (
     <div className="glass-card overflow-hidden p-6">
