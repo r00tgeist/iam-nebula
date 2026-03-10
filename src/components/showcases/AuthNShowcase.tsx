@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
@@ -48,19 +48,15 @@ const AuthNShowcase = () => {
   const [method, setMethod] = useState<AuthMethod>("password");
   const [stage, setStage] = useState<FlowStage>("idle");
   const [success, setSuccess] = useState(true);
-  const [particlePos, setParticlePos] = useState(0);
-
   const isRunning = stage !== "idle" && stage !== "result";
 
   const reset = useCallback(() => {
     setStage("idle");
-    setParticlePos(0);
   }, []);
 
   const startFlow = useCallback(() => {
     if (isRunning) return;
     setStage("claiming");
-    setParticlePos(0);
     setSuccess(true);
 
     const delays = [
@@ -74,14 +70,6 @@ const AuthNShowcase = () => {
       setTimeout(() => setStage(s), ms);
     });
   }, [isRunning]);
-
-  // Animate particle position based on stage
-  useEffect(() => {
-    const idx = stageIndex(stage);
-    if (idx > 0) {
-      setParticlePos(idx - 1);
-    }
-  }, [stage]);
 
   const isStageActive = (s: FlowStage) => stageIndex(stage) >= stageIndex(s);
   const isStageCurrently = (s: FlowStage) => stage === s;
@@ -156,120 +144,99 @@ const AuthNShowcase = () => {
       <div className="relative">
         {/* Desktop horizontal flow */}
         <div className="hidden md:block">
-          <div className="flex items-center justify-between relative">
-            {/* Connection lines */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
-              {STAGES.slice(0, -1).map((_, i) => {
-                const x1Pct = (i / (STAGES.length - 1)) * 100 + (100 / (STAGES.length - 1)) * 0.35;
-                const x2Pct = ((i + 1) / (STAGES.length - 1)) * 100 - (100 / (STAGES.length - 1)) * 0.35;
-                const active = isStageActive(STAGES[i + 1].id);
-
-                return (
-                  <motion.line
-                    key={i}
-                    x1={`${x1Pct}%`}
-                    y1="50%"
-                    x2={`${x2Pct}%`}
-                    y2="50%"
-                    stroke={active ? "hsl(187 100% 50%)" : "rgba(255,255,255,0.08)"}
-                    strokeWidth={active ? 2 : 1}
-                    strokeDasharray={active ? "none" : "4 4"}
-                    initial={false}
-                    animate={{
-                      stroke: active ? "hsl(187 100% 50%)" : "rgba(255,255,255,0.08)",
-                      strokeWidth: active ? 2 : 1,
-                    }}
-                    transition={{ duration: 0.4 }}
-                  />
-                );
-              })}
-            </svg>
-
-            {/* Traveling particle */}
-            <AnimatePresence>
-              {isRunning && (
-                <motion.div
-                  className="absolute z-20 pointer-events-none"
-                  style={{ top: "50%", transform: "translate(-50%, -50%)" }}
-                  initial={{ left: "0%", opacity: 0 }}
-                  animate={{
-                    left: `${(particlePos / (STAGES.length - 1)) * 100}%`,
-                    opacity: 1,
-                  }}
-                  exit={{ opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 120, damping: 20 }}
-                >
-                  <div className="relative">
-                    <div className="h-3 w-3 rounded-full bg-primary glow-cyan-strong" />
-                    <div className="absolute inset-0 h-3 w-3 rounded-full bg-primary animate-ping opacity-40" />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Stage nodes */}
+          <div className="flex items-stretch">
             {STAGES.map((node, i) => {
               const active = isStageActive(node.id);
               const current = isStageCurrently(node.id);
               const isResultNode = node.id === "result";
               const showResult = isResultNode && stage === "result";
+              const isLast = i === STAGES.length - 1;
+              const nextActive = !isLast && isStageActive(STAGES[i + 1].id);
 
               return (
-                <div key={node.id} className="relative z-10 flex flex-col items-center" style={{ width: `${100 / STAGES.length}%` }}>
-                  <motion.div
-                    className={`flex h-16 w-16 items-center justify-center rounded-2xl border transition-colors duration-300 ${
-                      showResult
+                <div key={node.id} className="flex flex-1 items-center">
+                  {/* Node column */}
+                  <div className="flex flex-col items-center w-16 shrink-0">
+                    <motion.div
+                      className={`relative flex h-16 w-16 items-center justify-center rounded-2xl border transition-colors duration-300 ${
+                        showResult
+                          ? success
+                            ? "border-green-500/50 bg-green-500/10 text-green-400"
+                            : "border-destructive/50 bg-destructive/10 text-destructive"
+                          : active
+                            ? "border-primary/40 bg-primary/10 text-primary"
+                            : "border-[rgba(255,255,255,0.06)] bg-card/40 text-muted-foreground"
+                      }`}
+                      animate={{
+                        scale: current ? 1.1 : 1,
+                        boxShadow: current
+                          ? "0 0 30px rgba(0, 229, 255, 0.2)"
+                          : showResult && success
+                            ? "0 0 30px rgba(34, 197, 94, 0.2)"
+                            : "none",
+                      }}
+                      transition={spring}
+                    >
+                      {showResult ? (
+                        success ? <ShieldCheck size={22} /> : <ShieldX size={22} />
+                      ) : (
+                        node.icon
+                      )}
+
+                      {/* Pulse ring on active */}
+                      {current && (
+                        <motion.div
+                          className="absolute inset-0 rounded-2xl border border-primary/30"
+                          initial={{ scale: 1, opacity: 0.6 }}
+                          animate={{ scale: 1.4, opacity: 0 }}
+                          transition={{ duration: 1.2, repeat: Infinity }}
+                        />
+                      )}
+                    </motion.div>
+
+                    <motion.p
+                      className={`mt-3 text-xs font-semibold text-center whitespace-nowrap transition-colors ${
+                        active ? "text-foreground" : "text-muted-foreground"
+                      }`}
+                      animate={{ opacity: active ? 1 : 0.5 }}
+                    >
+                      {showResult ? (success ? "Authenticated" : "Denied") : node.label}
+                    </motion.p>
+                    <p className={`text-[10px] text-center whitespace-nowrap ${
+                      active ? "text-muted-foreground" : "text-muted-foreground/50"
+                    }`}>
+                      {showResult
                         ? success
-                          ? "border-green-500/50 bg-green-500/10 text-green-400"
-                          : "border-destructive/50 bg-destructive/10 text-destructive"
-                        : active
-                          ? "border-primary/40 bg-primary/10 text-primary"
-                          : "border-[rgba(255,255,255,0.06)] bg-card/40 text-muted-foreground"
-                    }`}
-                    animate={{
-                      scale: current ? 1.1 : 1,
-                      boxShadow: current
-                        ? "0 0 30px rgba(0, 229, 255, 0.2)"
-                        : showResult && success
-                          ? "0 0 30px rgba(34, 197, 94, 0.2)"
-                          : "none",
-                    }}
-                    transition={spring}
-                  >
-                    {showResult ? (
-                      success ? <ShieldCheck size={22} /> : <ShieldX size={22} />
-                    ) : (
-                      node.icon
-                    )}
+                          ? "Token issued"
+                          : "Invalid credentials"
+                        : node.sublabel}
+                    </p>
+                  </div>
 
-                    {/* Pulse ring on active */}
-                    {current && (
+                  {/* Connector line between nodes */}
+                  {!isLast && (
+                    <div className="flex-1 flex items-center px-1 -mt-8">
                       <motion.div
-                        className="absolute inset-0 rounded-2xl border border-primary/30"
-                        initial={{ scale: 1, opacity: 0.6 }}
-                        animate={{ scale: 1.4, opacity: 0 }}
-                        transition={{ duration: 1.2, repeat: Infinity }}
+                        className="h-[2px] w-full rounded-full"
+                        initial={false}
+                        animate={{
+                          background: nextActive
+                            ? "linear-gradient(90deg, hsl(187 100% 50%), hsl(187 100% 50%))"
+                            : "linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.06))",
+                        }}
+                        transition={{ duration: 0.4 }}
+                        style={{
+                          backgroundSize: nextActive ? "100% 100%" : "8px 100%",
+                          backgroundRepeat: nextActive ? "no-repeat" : "repeat",
+                          ...(nextActive
+                            ? {}
+                            : {
+                                background: "repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 4px, transparent 4px, transparent 8px)",
+                              }),
+                        }}
                       />
-                    )}
-                  </motion.div>
-
-                  <motion.p
-                    className={`mt-3 text-xs font-semibold text-center transition-colors ${
-                      active ? "text-foreground" : "text-muted-foreground"
-                    }`}
-                    animate={{ opacity: active ? 1 : 0.5 }}
-                  >
-                    {showResult ? (success ? "Authenticated" : "Denied") : node.label}
-                  </motion.p>
-                  <p className={`text-[10px] text-center ${
-                    active ? "text-muted-foreground" : "text-muted-foreground/50"
-                  }`}>
-                    {showResult
-                      ? success
-                        ? "Token issued"
-                        : "Invalid credentials"
-                      : node.sublabel}
-                  </p>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -277,12 +244,14 @@ const AuthNShowcase = () => {
         </div>
 
         {/* Mobile vertical flow */}
-        <div className="md:hidden space-y-1">
+        <div className="md:hidden space-y-0">
           {STAGES.map((node, i) => {
             const active = isStageActive(node.id);
             const current = isStageCurrently(node.id);
             const isResultNode = node.id === "result";
             const showResult = isResultNode && stage === "result";
+            const isLast = i === STAGES.length - 1;
+            const nextActive = !isLast && isStageActive(STAGES[i + 1].id);
 
             return (
               <div key={node.id}>
@@ -317,8 +286,14 @@ const AuthNShowcase = () => {
                     </p>
                   </div>
                 </div>
-                {i < STAGES.length - 1 && (
-                  <div className="ml-6 h-4 border-l border-dashed border-[rgba(255,255,255,0.08)]" />
+                {!isLast && (
+                  <div
+                    className={`ml-6 h-5 border-l transition-colors duration-300 ${
+                      nextActive
+                        ? "border-primary/50 border-solid"
+                        : "border-[rgba(255,255,255,0.08)] border-dashed"
+                    }`}
+                  />
                 )}
               </div>
             );
