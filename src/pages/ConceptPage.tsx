@@ -5,7 +5,7 @@ import { concepts } from "@/data/concepts";
 import { connections } from "@/data/connections";
 import RoadmapDiagram from "@/components/RoadmapDiagram";
 import LucideIcon from "@/components/LucideIcon";
-import { ConceptShowcase, hasShowcase } from "@/components/showcases";
+import { ConceptShowcase, hasShowcase } from "@/components/showcases/index";
 
 const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
 
