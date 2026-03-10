@@ -5,6 +5,7 @@ import { concepts } from "@/data/concepts";
 import { connections } from "@/data/connections";
 import RoadmapDiagram from "@/components/RoadmapDiagram";
 import LucideIcon from "@/components/LucideIcon";
+import { ConceptShowcase, hasShowcase } from "@/components/showcases";
 
 const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
 
@@ -23,6 +24,7 @@ const ConceptPage = () => {
   }
 
   const isCyan = concept.category === "basic";
+  const showShowcase = id && hasShowcase(id);
 
   return (
     <div className="min-h-screen px-4 py-8">
@@ -77,13 +79,25 @@ const ConceptPage = () => {
           </p>
         </motion.div>
 
+        {/* Interactive Showcase (rendered above roadmap for prominence) */}
+        {showShowcase && (
+          <motion.div
+            className="mt-12"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...spring, delay: 0.15 }}
+          >
+            <ConceptShowcase conceptId={id!} />
+          </motion.div>
+        )}
+
         {/* Roadmap */}
         {conceptConnections && (
           <motion.div
             className="mt-12"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ ...spring, delay: 0.2 }}
+            transition={{ ...spring, delay: showShowcase ? 0.3 : 0.2 }}
           >
             <RoadmapDiagram concept={concept} connections={conceptConnections} />
           </motion.div>
@@ -94,7 +108,7 @@ const ConceptPage = () => {
           className="mt-16 space-y-8"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ ...spring, delay: 0.4 }}
+          transition={{ ...spring, delay: showShowcase ? 0.45 : 0.4 }}
         >
           <div>
             <h2 className="font-display text-xl font-bold text-foreground">
