@@ -50,7 +50,7 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
   const centerY = center;
 
   return (
-    <div className="glass-card overflow-hidden p-6">
+    <div className="glass-card overflow-visible p-6">
       <h2 className="font-display text-lg font-bold text-foreground mb-6">
         Connected Concepts & Services
       </h2>
