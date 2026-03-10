@@ -49,10 +49,14 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
   const centerX = center;
   const centerY = center;
 
+  // Offset: lines connect to icon center, but the div includes the label below.
+  // We need to offset the line endpoints to hit the icon center, not the div center.
+  const labelOffset = 16; // half the label height roughly
+
   return (
-    <div className="glass-card overflow-visible p-6">
+    <div className="glass-card overflow-hidden p-6">
       <h2 className="font-display text-lg font-bold text-foreground mb-6">
-        Connected Concepts & Services
+        Connected Concepts &amp; Services
       </h2>
 
       {/* Desktop SVG diagram */}
@@ -88,7 +92,7 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
             })}
           </svg>
 
-          {/* Center node */}
+          {/* Center node — positioned so the icon center aligns with centerX/centerY */}
           <AnimatePresence>
             {showCenter && (
               <motion.div
@@ -96,10 +100,12 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
                 style={{
                   left: centerX,
                   top: centerY,
-                  transform: "translate(-50%, -50%)",
+                  x: "-50%",
+                  y: "-50%",
+                  marginTop: -labelOffset,
                 }}
                 initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
+                animate={{ scale: 1, opacity: 1, y: "-50%" }}
                 transition={spring}
               >
                 <div
@@ -118,7 +124,7 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
             )}
           </AnimatePresence>
 
-          {/* Surrounding nodes */}
+          {/* Surrounding nodes — icon center aligns with the line endpoint */}
           {nodes.map((node, i) => {
             if (i >= visibleLines) return null;
             const pos = positions[i];
@@ -130,10 +136,12 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
                 style={{
                   left: pos.x,
                   top: pos.y,
-                  transform: "translate(-50%, -50%)",
+                  x: "-50%",
+                  y: "-50%",
+                  marginTop: -10,
                 }}
                 initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
+                animate={{ scale: 1, opacity: 1, y: "-50%" }}
                 transition={{ ...spring, delay: 0.1 }}
                 onMouseEnter={() => setActiveNode(node.id)}
                 onMouseLeave={() => setActiveNode(null)}
@@ -164,7 +172,6 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
 
       {/* Mobile vertical layout */}
       <div className="md:hidden">
-        {/* Center node */}
         <motion.div
           className="mb-6 flex items-center gap-3"
           initial={{ scale: 0.8, opacity: 0 }}
