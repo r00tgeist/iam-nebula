@@ -57,8 +57,8 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
 
       {/* Desktop SVG diagram */}
       <div className="hidden md:block">
-        <div className="relative mx-auto" style={{ width: 600, height: 600 }}>
-          <svg width="600" height="600" className="absolute inset-0">
+        <div className="relative mx-auto" style={{ width: size, height: size }}>
+          <svg width={size} height={size} className="absolute inset-0">
             {nodes.map((node, i) => {
               if (i >= visibleLines) return null;
               const pos = positions[i];
