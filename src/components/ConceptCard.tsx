@@ -11,13 +11,12 @@ const ConceptCard = ({ concept, index }: { concept: Concept; index: number }) =>
 
   return (
     <motion.div
-      layoutId={`card-${concept.id}`}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ ...spring, delay: 0.8 + index * 0.05 }}
+      transition={{ ...spring, delay: 0.3 + index * 0.05 }}
       whileHover={{ y: -8, transition: spring }}
       onClick={() => navigate(`/concept/${concept.id}`)}
-      className="group relative cursor-pointer overflow-hidden rounded-xl border border-dashed border-[rgba(255,255,255,0.08)] bg-card/50 p-6 backdrop-blur-md transition-colors duration-300 hover:border-solid hover:border-primary/50"
+      className="group relative cursor-pointer overflow-hidden rounded-xl border border-dashed border-[rgba(255,255,255,0.08)] bg-card/80 p-6 transition-colors duration-300 hover:border-solid hover:border-primary/50"
       style={{
         boxShadow: "none",
         transition: "box-shadow 0.3s, border-color 0.3s",

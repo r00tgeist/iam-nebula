@@ -17,26 +17,26 @@ const HeroSection = ({
 
   return (
     <section className="relative flex min-h-[60vh] flex-col items-center justify-center overflow-hidden px-4 pt-20 pb-10">
-      {/* Mesh gradient background */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {/* Mesh gradient background — GPU-composited, reduced blur */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ contain: "strict" }}>
         <div
-          className="absolute -top-1/4 -left-1/4 h-[600px] w-[600px] rounded-full opacity-30 blur-[120px]"
-          style={{ background: "hsl(187 100% 50%)", animation: "mesh-move 12s ease-in-out infinite" }}
+          className="absolute -top-1/4 -left-1/4 h-[500px] w-[500px] rounded-full opacity-25 blur-[80px]"
+          style={{ background: "hsl(187 100% 50%)", animation: "mesh-move 12s ease-in-out infinite", willChange: "transform", transform: "translateZ(0)" }}
         />
         <div
-          className="absolute -right-1/4 top-1/4 h-[500px] w-[500px] rounded-full opacity-20 blur-[120px]"
-          style={{ background: "hsl(263 87% 66%)", animation: "mesh-move 15s ease-in-out infinite reverse" }}
+          className="absolute -right-1/4 top-1/4 h-[400px] w-[400px] rounded-full opacity-15 blur-[80px]"
+          style={{ background: "hsl(263 87% 66%)", animation: "mesh-move 15s ease-in-out infinite reverse", willChange: "transform", transform: "translateZ(0)" }}
         />
         <div
-          className="absolute bottom-0 left-1/3 h-[400px] w-[400px] rounded-full opacity-15 blur-[120px]"
-          style={{ background: "hsl(220 70% 20%)", animation: "mesh-move 18s ease-in-out infinite" }}
+          className="absolute bottom-0 left-1/3 h-[350px] w-[350px] rounded-full opacity-10 blur-[80px]"
+          style={{ background: "hsl(220 70% 20%)", animation: "mesh-move 18s ease-in-out infinite", willChange: "transform", transform: "translateZ(0)" }}
         />
       </div>
 
       <motion.h1
         className="font-display relative z-10 text-5xl font-extrabold tracking-tight sm:text-7xl md:text-8xl text-gradient-primary"
-        initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ ...spring, delay: 0.1 }}
       >
         IAM Decoded
