@@ -1,40 +1,43 @@
-import React, { lazy, Suspense } from "react";
+import { lazy, Suspense, ComponentType } from "react";
 
-const AuthNShowcase = lazy(() => import("./AuthNShowcase"));
-
-// Registry: maps concept ID to its showcase component
-const showcaseRegistry: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
-  authn: AuthNShowcase,
-  // Add more as we build them:
-  // authz: AuthZShowcase,
-  // "zero-trust": ZeroTrustShowcase,
-  // rbac: RBACShowcase,
-  // etc.
+// Lazy-load all showcases
+const showcaseMap: Record<string, () => Promise<{ default: ComponentType }>> = {
+  // Basic concepts
+  "authn": () => import("./AuthNShowcase"),
+  // Advanced concepts
+  "abac": () => import("./ABACShowcase"),
+  "pbac": () => import("./PBACShowcase"),
+  "zero-trust": () => import("./ZeroTrustShowcase"),
+  "pam": () => import("./PAMShowcase"),
+  "identity-federation": () => import("./IdentityFederationShowcase"),
+  "jit-access": () => import("./JITShowcase"),
+  "machine-identity": () => import("./ServiceAccountsShowcase"),
+  "iga": () => import("./IGAShowcase"),
 };
 
+// Check if a concept has a showcase
+export const hasShowcase = (conceptId: string): boolean => conceptId in showcaseMap;
+
+// Loading placeholder
 const ShowcaseLoader = () => (
-  <div className="glass-card flex items-center justify-center p-12">
+  <div className="glass-card p-8 flex items-center justify-center">
     <div className="flex items-center gap-3 text-muted-foreground">
-      <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-      <div className="h-2 w-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: "0.2s" }} />
-      <div className="h-2 w-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: "0.4s" }} />
-      <span className="text-sm ml-2">Loading showcase...</span>
+      <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      <span className="text-sm">Loading showcase...</span>
     </div>
   </div>
 );
 
+// Render showcase by concept ID
 export const ConceptShowcase = ({ conceptId }: { conceptId: string }) => {
-  const ShowcaseComponent = showcaseRegistry[conceptId];
+  const loader = showcaseMap[conceptId];
+  if (!loader) return null;
 
-  if (!ShowcaseComponent) return null;
+  const LazyComponent = lazy(loader);
 
   return (
     <Suspense fallback={<ShowcaseLoader />}>
-      <ShowcaseComponent />
+      <LazyComponent />
     </Suspense>
   );
-};
-
-export const hasShowcase = (conceptId: string): boolean => {
-  return conceptId in showcaseRegistry;
 };
