@@ -4,6 +4,12 @@ import { lazy, Suspense, ComponentType } from "react";
 const showcaseMap: Record<string, () => Promise<{ default: ComponentType }>> = {
   // Basic concepts
   "authn": () => import("./AuthNShowcase"),
+  "authz": () => import("./AuthZShowcase"),
+  "least-privilege": () => import("./LeastPrivilegeShowcase"),
+  "mfa": () => import("./MFAShowcase"),
+  "sso": () => import("./SSOShowcase"),
+  "password-policies": () => import("./PasswordPoliciesShowcase"),
+  "session-management": () => import("./SessionManagementShowcase"),
   // Advanced concepts
   "abac": () => import("./ABACShowcase"),
   "pbac": () => import("./PBACShowcase"),
