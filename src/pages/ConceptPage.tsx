@@ -5,6 +5,7 @@ import { concepts } from "@/data/concepts";
 import { connections } from "@/data/connections";
 import RoadmapDiagram from "@/components/RoadmapDiagram";
 import LucideIcon from "@/components/LucideIcon";
+import Footer from "@/components/Footer";
 import { ConceptShowcase, hasShowcase } from "@/components/showcases/index";
 
 const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
@@ -27,8 +28,8 @@ const ConceptPage = () => {
   const showShowcase = id && hasShowcase(id);
 
   return (
-    <div className="min-h-screen px-4 py-8">
-      <div className="mx-auto max-w-5xl">
+    <div className="flex min-h-screen flex-col px-4 py-8">
+      <div className="mx-auto w-full max-w-5xl flex-1">
         {/* Top bar */}
         <motion.div
           className="flex items-center gap-4"
@@ -79,7 +80,7 @@ const ConceptPage = () => {
           </p>
         </motion.div>
 
-        {/* Interactive Showcase (rendered above roadmap for prominence) */}
+        {/* Interactive Showcase */}
         {showShowcase && (
           <motion.div
             className="mt-12"
@@ -105,7 +106,7 @@ const ConceptPage = () => {
 
         {/* Description sections */}
         <motion.div
-          className="mt-16 space-y-8"
+          className="mt-16 space-y-8 pb-8"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...spring, delay: showShowcase ? 0.45 : 0.4 }}
@@ -138,6 +139,8 @@ const ConceptPage = () => {
           </div>
         </motion.div>
       </div>
+
+      <Footer />
     </div>
   );
 };
