@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import HeroSection from "@/components/HeroSection";
 import ConceptCard from "@/components/ConceptCard";
+import Footer from "@/components/Footer";
 import { concepts } from "@/data/concepts";
 
 const GalleryPage = () => {
@@ -16,10 +17,10 @@ const GalleryPage = () => {
   );
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <HeroSection filter={filter} setFilter={setFilter} />
 
-      <section className="mx-auto max-w-7xl px-4 pb-24">
+      <section className="mx-auto w-full max-w-7xl flex-1 px-4 pb-16">
         <motion.div
           layout
           className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
@@ -31,6 +32,8 @@ const GalleryPage = () => {
           </AnimatePresence>
         </motion.div>
       </section>
+
+      <Footer />
     </div>
   );
 };

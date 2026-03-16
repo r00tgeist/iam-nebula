@@ -1,20 +1,38 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useCallback } from "react";
 
 const MouseFollower = () => {
-  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const ref = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>();
+  const posRef = useRef({ x: 0, y: 0 });
+  const targetRef = useRef({ x: 0, y: 0 });
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => setPos({ x: e.clientX, y: e.clientY });
-    window.addEventListener("mousemove", handler);
-    return () => window.removeEventListener("mousemove", handler);
+  const lerp = useCallback(() => {
+    const ease = 0.12;
+    posRef.current.x += (targetRef.current.x - posRef.current.x) * ease;
+    posRef.current.y += (targetRef.current.y - posRef.current.y) * ease;
+
+    if (ref.current) {
+      ref.current.style.background = `radial-gradient(600px circle at ${posRef.current.x}px ${posRef.current.y}px, rgba(0, 229, 255, 0.04), transparent 60%)`;
+    }
+    rafRef.current = requestAnimationFrame(lerp);
   }, []);
 
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      targetRef.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener("mousemove", handler, { passive: true });
+    rafRef.current = requestAnimationFrame(lerp);
+    return () => {
+      window.removeEventListener("mousemove", handler);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [lerp]);
+
   return (
-    <motion.div
-      className="pointer-events-none fixed inset-0 z-[9998]"
-      animate={{ background: `radial-gradient(600px circle at ${pos.x}px ${pos.y}px, rgba(0, 229, 255, 0.04), transparent 60%)` }}
-      transition={{ type: "tween", duration: 0.15, ease: "linear" }}
+    <div
+      ref={ref}
+      className="pointer-events-none fixed inset-0 z-[9998] will-change-[background]"
     />
   );
 };
