@@ -9,6 +9,7 @@ const showcaseMap: Record<string, () => Promise<{ default: ComponentType }>> = {
   "mfa": () => import("./MFAShowcase"),
   "sso": () => import("./SSOShowcase"),
   "password-policies": () => import("./PasswordPoliciesShowcase"),
+  "rbac": () => import("./RBACShowcase"),
   "session-management": () => import("./SessionManagementShowcase"),
   // Advanced concepts
   "abac": () => import("./ABACShowcase"),
