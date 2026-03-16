@@ -57,8 +57,9 @@ const ConceptPage = () => {
 
         {/* Title */}
         <motion.div
-          layoutId={`card-${concept.id}`}
           className="mt-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={spring}
         >
           <div className="flex items-center gap-4">

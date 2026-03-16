@@ -22,7 +22,6 @@ const GalleryPage = () => {
 
       <section className="mx-auto w-full max-w-7xl flex-1 px-4 pb-16">
         <motion.div
-          layout
           className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
           <AnimatePresence mode="popLayout">
