@@ -165,3 +165,13 @@
   0% { transform: translateX(-100%) rotate(-45deg); }
   100% { transform: translateX(200%) rotate(-45deg); }
 }
+
+/* ─── Page enter ─── */
+@keyframes page-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.page-enter {
+  animation: page-enter 0.3s ease-out;
+}
