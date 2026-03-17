@@ -1,38 +1,18 @@
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Concept } from "@/data/concepts";
 import LucideIcon from "@/components/LucideIcon";
-
-const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
 
 const ConceptCard = ({ concept, index }: { concept: Concept; index: number }) => {
   const navigate = useNavigate();
   const isCyan = concept.category === "basic";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ ...spring, delay: 0.3 + index * 0.05 }}
-      whileHover={{ y: -8, transition: spring }}
+    <div
       onClick={() => navigate(`/concept/${concept.id}`)}
-      className="group relative cursor-pointer overflow-hidden rounded-xl border border-dashed border-[rgba(255,255,255,0.08)] bg-card/80 p-6 transition-colors duration-300 hover:border-solid hover:border-primary/50"
-      style={{
-        boxShadow: "none",
-        transition: "box-shadow 0.3s, border-color 0.3s",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow = isCyan
-          ? "0 0 30px rgba(0, 229, 255, 0.15)"
-          : "0 0 30px rgba(139, 92, 246, 0.15)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow = "none";
-      }}
+      className={`concept-card group relative cursor-pointer overflow-hidden rounded-xl border border-dashed border-[rgba(255,255,255,0.08)] bg-card/80 p-6 transition-all duration-300 ease-out hover:border-solid hover:-translate-y-2 ${
+        isCyan ? "hover:border-primary/50 hover:shadow-[0_0_30px_rgba(0,229,255,0.12)]" : "hover:border-secondary/50 hover:shadow-[0_0_30px_rgba(139,92,246,0.12)]"
+      }`}
     >
-      {/* Shimmer sweep */}
-      <div className="pointer-events-none absolute inset-0 -translate-x-full rotate-[-45deg] bg-gradient-to-r from-transparent via-[rgba(255,255,255,0.04)] to-transparent opacity-0 transition-opacity duration-300 group-hover:animate-[shimmer-sweep_0.8s_ease-out_forwards] group-hover:opacity-100" />
-
       {/* Category badge */}
       <span
         className={`inline-block rounded-full px-3 py-0.5 text-xs font-semibold font-body ${
@@ -53,7 +33,6 @@ const ConceptCard = ({ concept, index }: { concept: Concept; index: number }) =>
               : "bg-secondary/10 text-secondary"
           }`}
         >
-          {/* Glow ring on hover */}
           <div
             className={`absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${
               isCyan ? "glow-cyan" : "glow-violet"
@@ -77,7 +56,7 @@ const ConceptCard = ({ concept, index }: { concept: Concept; index: number }) =>
       <p className="mt-3 text-center text-xs font-medium text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100">
         Explore →
       </p>
-    </motion.div>
+    </div>
   );
 };
 

@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AnimatePresence } from "framer-motion";
 import GalleryPage from "./pages/GalleryPage";
 import ConceptPage from "./pages/ConceptPage";
 import MouseFollower from "./components/MouseFollower";
@@ -14,13 +13,11 @@ const App = () => (
     <TooltipProvider>
       <MouseFollower />
       <BrowserRouter>
-        <AnimatePresence mode="wait">
-          <Routes>
-            <Route path="/" element={<GalleryPage />} />
-            <Route path="/concept/:id" element={<ConceptPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AnimatePresence>
+        <Routes>
+          <Route path="/" element={<GalleryPage />} />
+          <Route path="/concept/:id" element={<ConceptPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
