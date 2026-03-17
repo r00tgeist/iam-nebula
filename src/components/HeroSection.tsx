@@ -17,55 +17,58 @@ const HeroSection = ({
 
   return (
     <section className="relative flex min-h-[60vh] flex-col items-center justify-center overflow-hidden px-4 pt-20 pb-10">
-      {/* Mesh gradient background — GPU-composited, reduced blur */}
+      {/* Mesh gradient — uses radial-gradient instead of blur filter */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ contain: "strict" }}>
         <div
-          className="absolute -top-1/4 -left-1/4 h-[500px] w-[500px] rounded-full opacity-25 blur-[80px]"
-          style={{ background: "hsl(187 100% 50%)", animation: "mesh-move 12s ease-in-out infinite", willChange: "transform", transform: "translateZ(0)" }}
+          className="absolute -top-[200px] -left-[200px] h-[700px] w-[700px] rounded-full"
+          style={{
+            background: "radial-gradient(circle, hsla(187,100%,50%,0.18) 0%, transparent 65%)",
+            animation: "mesh-drift 14s ease-in-out infinite",
+            willChange: "transform",
+          }}
         />
         <div
-          className="absolute -right-1/4 top-1/4 h-[400px] w-[400px] rounded-full opacity-15 blur-[80px]"
-          style={{ background: "hsl(263 87% 66%)", animation: "mesh-move 15s ease-in-out infinite reverse", willChange: "transform", transform: "translateZ(0)" }}
+          className="absolute -right-[150px] top-[10%] h-[600px] w-[600px] rounded-full"
+          style={{
+            background: "radial-gradient(circle, hsla(263,87%,66%,0.12) 0%, transparent 65%)",
+            animation: "mesh-drift 18s ease-in-out infinite reverse",
+            willChange: "transform",
+          }}
         />
         <div
-          className="absolute bottom-0 left-1/3 h-[350px] w-[350px] rounded-full opacity-10 blur-[80px]"
-          style={{ background: "hsl(220 70% 20%)", animation: "mesh-move 18s ease-in-out infinite", willChange: "transform", transform: "translateZ(0)" }}
+          className="absolute bottom-[-100px] left-[25%] h-[500px] w-[500px] rounded-full"
+          style={{
+            background: "radial-gradient(circle, hsla(220,70%,20%,0.15) 0%, transparent 65%)",
+            animation: "mesh-drift 22s ease-in-out infinite",
+            willChange: "transform",
+          }}
         />
       </div>
 
-      <motion.h1
-        className="font-display relative z-10 text-5xl font-extrabold tracking-tight sm:text-7xl md:text-8xl text-gradient-primary"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...spring, delay: 0.1 }}
+      <h1
+        className="hero-animate font-display relative z-10 text-5xl font-extrabold tracking-tight sm:text-7xl md:text-8xl text-gradient-primary"
+        style={{ animationDelay: "0.1s" }}
       >
         IAM Decoded
-      </motion.h1>
+      </h1>
 
-      <motion.p
-        className="relative z-10 mt-5 max-w-xl text-center text-lg text-muted-foreground"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...spring, delay: 0.35 }}
+      <p
+        className="hero-animate relative z-10 mt-5 max-w-xl text-center text-lg text-muted-foreground"
+        style={{ animationDelay: "0.3s" }}
       >
         Master Identity &amp; Access Management — from zero to architect
-      </motion.p>
+      </p>
 
       {/* Animated divider */}
-      <motion.div
-        className="relative z-10 mt-8 h-px w-64 bg-primary"
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.8, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        style={{ originX: 0 }}
+      <div
+        className="hero-animate relative z-10 mt-8 h-px w-64 bg-primary origin-left"
+        style={{ animationDelay: "0.5s", animation: "divider-draw 0.8s cubic-bezier(0.22,1,0.36,1) 0.5s both" }}
       />
 
-      {/* Filter pills */}
-      <motion.div
-        className="relative z-10 mt-8 flex gap-3"
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...spring, delay: 0.7 }}
+      {/* Filter pills — keep Framer only for the pill indicator */}
+      <div
+        className="hero-animate relative z-10 mt-8 flex gap-3"
+        style={{ animationDelay: "0.6s" }}
       >
         {filters.map((f) => (
           <button
@@ -87,7 +90,7 @@ const HeroSection = ({
             <span className="relative z-10">{f.label}</span>
           </button>
         ))}
-      </motion.div>
+      </div>
     </section>
   );
 };
