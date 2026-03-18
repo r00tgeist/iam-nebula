@@ -5,8 +5,6 @@ export interface Tool {
   tag: "free" | "freemium" | "enterprise";
 }
 
-// Maps concept IDs to relevant tools/products
-// TODO: Replace URLs with your affiliate links when approved
 export const conceptTools: Record<string, Tool[]> = {
   "authn": [
     { name: "Auth0", description: "Universal authentication platform with SDKs for every framework", url: "https://auth0.com", tag: "freemium" },

@@ -1,14 +1,7 @@
-import { Github, Twitter, Linkedin, Send, ExternalLink, KeyRound } from "lucide-react";
-
-const SOCIALS = [
-  { icon: Github, href: "https://github.com/rootgeist", label: "GitHub" },
-  { icon: Twitter, href: "https://x.com/rootgeist", label: "X / Twitter" },
-  { icon: Linkedin, href: "https://linkedin.com/in/rootgeist", label: "LinkedIn" },
-];
+import { Send, KeyRound } from "lucide-react";
 
 const LINKS = [
   { label: "All Concepts", href: "/" },
-  { label: "GitHub Repo", href: "https://github.com/rootgeist/iam-decoded", external: true },
 ];
 
 const Footer = () => {
@@ -29,7 +22,6 @@ const Footer = () => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                // TODO: wire to email service (ConvertKit, Buttondown, etc.)
                 const input = e.currentTarget.querySelector("input");
                 if (input) {
                   input.value = "";
@@ -68,9 +60,6 @@ const Footer = () => {
               <p className="font-display text-sm font-bold text-gradient-primary">
                 IAM Decoded
               </p>
-              <p className="text-[10px] text-muted-foreground/50 font-mono tracking-wider">
-                by rootgeist
-              </p>
             </div>
           </div>
 
@@ -80,28 +69,9 @@ const Footer = () => {
               <a
                 key={link.label}
                 href={link.href}
-                target={link.external ? "_blank" : undefined}
-                rel={link.external ? "noopener noreferrer" : undefined}
                 className="flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-foreground transition-colors"
               >
                 {link.label}
-                {link.external && <ExternalLink size={10} />}
-              </a>
-            ))}
-          </div>
-
-          {/* Socials */}
-          <div className="flex items-center gap-1">
-            {SOCIALS.map((s) => (
-              <a
-                key={s.label}
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={s.label}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground/40 hover:text-foreground hover:bg-[rgba(255,255,255,0.04)] transition-all"
-              >
-                <s.icon size={16} />
               </a>
             ))}
           </div>
@@ -110,7 +80,7 @@ const Footer = () => {
         {/* Bottom line */}
         <div className="mt-6 pt-5 border-t border-[rgba(255,255,255,0.03)] flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-[10px] text-muted-foreground/30 font-mono">
-            © {new Date().getFullYear()} rootgeist. All rights reserved.
+            © {new Date().getFullYear()} IAM Decoded. All rights reserved.
           </p>
           <p className="text-[10px] text-muted-foreground/20 font-mono">
             Built with React + TypeScript + Framer Motion

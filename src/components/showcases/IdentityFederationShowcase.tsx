@@ -7,7 +7,7 @@ const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
 interface Org { id: string; label: string; domain: string; protocol: string }
 
 const ORGS: Org[] = [
-  { id: "home", label: "Home Org", domain: "corp.a1.bg", protocol: "SAML 2.0" },
+  { id: "home", label: "Home Org", domain: "corp.example.com", protocol: "SAML 2.0" },
   { id: "partner", label: "Partner Org", domain: "partner.cloud", protocol: "OIDC" },
   { id: "saas", label: "SaaS Provider", domain: "app.saas.io", protocol: "OIDC" },
 ];
@@ -103,7 +103,7 @@ const IdentityFederationShowcase = () => {
           className="rounded-xl border border-secondary/10 bg-secondary/[0.02] p-4 mb-6">
           <p className="text-[10px] font-mono uppercase tracking-wider text-secondary font-semibold mb-2">Federation Details</p>
           <div className="font-mono text-[11px] space-y-1.5">
-            <div className="flex justify-between"><span className="text-muted-foreground">Home IdP</span><span className="text-foreground">corp.a1.bg</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Home IdP</span><span className="text-foreground">corp.example.com</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Target SP</span><span className="text-foreground">{targetOrg.domain}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Protocol</span><span className="text-foreground">{targetOrg.protocol}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Claim mapping</span><span className="text-foreground">groups → local roles</span></div>

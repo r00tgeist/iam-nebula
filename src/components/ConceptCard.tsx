@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Concept } from "@/data/concepts";
 import LucideIcon from "@/components/LucideIcon";
+import { ArrowRight } from "lucide-react";
 
 const ConceptCard = ({ concept, index }: { concept: Concept; index: number }) => {
   const navigate = useNavigate();
@@ -9,53 +10,63 @@ const ConceptCard = ({ concept, index }: { concept: Concept; index: number }) =>
   return (
     <div
       onClick={() => navigate(`/concept/${concept.id}`)}
-      className={`concept-card group relative cursor-pointer overflow-hidden rounded-xl border border-dashed border-[rgba(255,255,255,0.08)] bg-card/80 p-6 transition-all duration-300 ease-out hover:border-solid hover:-translate-y-2 ${
-        isCyan ? "hover:border-primary/50 hover:shadow-[0_0_30px_rgba(0,229,255,0.12)]" : "hover:border-secondary/50 hover:shadow-[0_0_30px_rgba(139,92,246,0.12)]"
-      }`}
+      className="concept-card group cursor-pointer rounded-xl bg-card/60 p-6 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:bg-card/90"
     >
-      {/* Category badge */}
-      <span
-        className={`inline-block rounded-full px-3 py-0.5 text-xs font-semibold font-body ${
-          isCyan
-            ? "bg-primary/15 text-primary"
-            : "bg-secondary/15 text-secondary"
-        }`}
-      >
-        {concept.category === "basic" ? "Basic" : "Advanced"}
-      </span>
-
-      {/* Icon */}
-      <div className="mt-6 flex justify-center">
-        <div
-          className={`relative flex h-16 w-16 items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110 ${
+      {/* Top row: badge + arrow */}
+      <div className="flex items-center justify-between mb-6">
+        <span
+          className={`inline-block rounded-full px-3 py-0.5 text-[10px] font-semibold font-mono uppercase tracking-wider ${
             isCyan
-              ? "bg-primary/10 text-primary"
-              : "bg-secondary/10 text-secondary"
+              ? "bg-primary/10 text-primary/80 border border-primary/10"
+              : "bg-secondary/10 text-secondary/80 border border-secondary/10"
           }`}
         >
+          {concept.category}
+        </span>
+        <ArrowRight
+          size={14}
+          className="text-muted-foreground/0 group-hover:text-muted-foreground/60 transition-all duration-300 -translate-x-2 group-hover:translate-x-0"
+        />
+      </div>
+
+      {/* Icon */}
+      <div className="flex justify-center mb-5">
+        <div className="relative">
           <div
-            className={`absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${
+            className={`flex h-14 w-14 items-center justify-center rounded-2xl transition-all duration-300 group-hover:scale-110 ${
+              isCyan
+                ? "bg-primary/8 text-primary/70 group-hover:bg-primary/12 group-hover:text-primary"
+                : "bg-secondary/8 text-secondary/70 group-hover:bg-secondary/12 group-hover:text-secondary"
+            }`}
+          >
+            <LucideIcon name={concept.icon} size={24} />
+          </div>
+          <div
+            className={`absolute -inset-2 rounded-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${
               isCyan ? "glow-cyan" : "glow-violet"
             }`}
           />
-          <LucideIcon name={concept.icon} size={28} />
         </div>
       </div>
 
       {/* Title */}
-      <h3 className="font-display mt-5 text-center text-lg font-bold text-foreground">
+      <h3 className="font-display text-center text-base font-bold text-foreground/90 group-hover:text-foreground transition-colors duration-200">
         {concept.shortTitle}
       </h3>
 
       {/* Description */}
-      <p className="mt-2 text-center text-sm text-muted-foreground transition-transform duration-200 group-hover:-translate-y-1">
+      <p className="mt-2 text-center text-[13px] text-muted-foreground/60 leading-relaxed group-hover:text-muted-foreground/80 transition-colors duration-200">
         {concept.description}
       </p>
 
-      {/* Explore link */}
-      <p className="mt-3 text-center text-xs font-medium text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-        Explore →
-      </p>
+      {/* Bottom accent line */}
+      <div className="mt-5 flex justify-center">
+        <div
+          className={`h-px w-0 group-hover:w-12 transition-all duration-500 ease-out ${
+            isCyan ? "bg-primary/30" : "bg-secondary/30"
+          }`}
+        />
+      </div>
     </div>
   );
 };

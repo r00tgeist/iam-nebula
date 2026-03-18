@@ -121,7 +121,7 @@ const PasswordWidget = ({ active }: { active: boolean }) => {
     <div className="space-y-3">
       <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.3)] px-4 py-3">
         <p className="text-[10px] text-muted-foreground mb-1.5 font-mono uppercase tracking-wider">Username</p>
-        <p className="text-sm text-foreground font-mono">alex@a1.bg</p>
+        <p className="text-sm text-foreground font-mono">user@example.com</p>
       </div>
       <div className="rounded-lg border border-primary/20 bg-[rgba(0,0,0,0.3)] px-4 py-3">
         <div className="flex items-center justify-between mb-1.5">
@@ -680,7 +680,7 @@ const AuthNShowcase = () => {
                 </p>
                 {success && (
                   <div className="mt-3 rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgba(0,0,0,0.2)] p-3 font-mono text-[10px] text-muted-foreground space-y-1">
-                    <p><span className="text-primary">sub:</span> alex@a1.bg</p>
+                    <p><span className="text-primary">sub:</span> user@example.com</p>
                     <p><span className="text-primary">amr:</span> [{method === "password" ? '"pwd"' : method === "biometric" ? '"fpt"' : '"otp"'}]</p>
                     <p><span className="text-primary">exp:</span> {Math.floor(Date.now() / 1000) + 900}</p>
                     <p><span className="text-primary">iss:</span> https://auth.example.com</p>

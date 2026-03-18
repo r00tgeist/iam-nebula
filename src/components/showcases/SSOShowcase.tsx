@@ -59,7 +59,7 @@ const SSOShowcase = () => {
           </div>
           <p className="font-display text-sm font-bold text-foreground">Identity Provider</p>
           <p className="text-[10px] font-mono text-muted-foreground">idp.corp.com (SAML 2.0)</p>
-          {authenticated && <p className="text-[10px] font-mono text-green-400 mt-1">Session: alex@a1.bg</p>}
+          {authenticated && <p className="text-[10px] font-mono text-green-400 mt-1">Session: user@example.com</p>}
         </motion.div>
       </div>
 
