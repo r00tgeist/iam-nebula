@@ -121,7 +121,7 @@ const PasswordWidget = ({ active }: { active: boolean }) => {
     <div className="space-y-3">
       <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.3)] px-4 py-3">
         <p className="text-[10px] text-muted-foreground mb-1.5 font-mono uppercase tracking-wider">Username</p>
-        <p className="text-sm text-foreground font-mono">alex@a1.bg</p>
+        <p className="text-sm text-foreground font-mono">user@example.com</p>
       </div>
       <div className="rounded-lg border border-primary/20 bg-[rgba(0,0,0,0.3)] px-4 py-3">
         <div className="flex items-center justify-between mb-1.5">
