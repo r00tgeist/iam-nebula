@@ -7,7 +7,7 @@ const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
 interface Org { id: string; label: string; domain: string; protocol: string }
 
 const ORGS: Org[] = [
-  { id: "home", label: "Home Org", domain: "corp.a1.bg", protocol: "SAML 2.0" },
+  { id: "home", label: "Home Org", domain: "corp.example.com", protocol: "SAML 2.0" },
   { id: "partner", label: "Partner Org", domain: "partner.cloud", protocol: "OIDC" },
   { id: "saas", label: "SaaS Provider", domain: "app.saas.io", protocol: "OIDC" },
 ];
