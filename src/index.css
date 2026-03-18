@@ -6,34 +6,24 @@
   :root {
     --background: 240 33% 4%;
     --foreground: 240 10% 92%;
-
     --card: 240 20% 9%;
     --card-foreground: 240 10% 92%;
-
     --popover: 240 20% 9%;
     --popover-foreground: 240 10% 92%;
-
     --primary: 187 100% 50%;
     --primary-foreground: 240 33% 4%;
-
     --secondary: 263 87% 66%;
     --secondary-foreground: 240 33% 4%;
-
     --muted: 240 10% 16%;
     --muted-foreground: 240 10% 45%;
-
     --accent: 263 87% 66%;
     --accent-foreground: 240 10% 92%;
-
     --destructive: 349 100% 62%;
     --destructive-foreground: 240 10% 92%;
-
     --border: 240 10% 14%;
     --input: 240 10% 14%;
     --ring: 187 100% 50%;
-
     --radius: 0.75rem;
-
     --sidebar-background: 240 20% 6%;
     --sidebar-foreground: 240 10% 92%;
     --sidebar-primary: 187 100% 50%;
@@ -49,23 +39,21 @@
   * {
     @apply border-border;
   }
-
   html {
     scroll-behavior: smooth;
   }
-
   body {
     @apply bg-background text-foreground font-body antialiased;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
-
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Syne', sans-serif;
   }
 }
 
+/* ─── Utilities ─── */
 @layer utilities {
   .glass-card {
     @apply bg-card/80 border border-[rgba(255,255,255,0.06)] rounded-xl;
@@ -89,8 +77,61 @@
   }
 }
 
-/* ─── Card entrance (pure CSS, GPU only) ─── */
+/* ─── Card entrance (pure CSS, GPU) ─── */
 @keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.concept-card {
+  opacity: 0;
+  animation: card-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  position: relative;
+}
+
+.concept-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: background 0.4s ease;
+}
+
+.concept-card:hover::before {
+  background: linear-gradient(135deg, rgba(0,229,255,0.25), rgba(139,92,246,0.15));
+}
+
+.concept-card:nth-child(1)  { animation-delay: 0.04s; }
+.concept-card:nth-child(2)  { animation-delay: 0.08s; }
+.concept-card:nth-child(3)  { animation-delay: 0.12s; }
+.concept-card:nth-child(4)  { animation-delay: 0.16s; }
+.concept-card:nth-child(5)  { animation-delay: 0.20s; }
+.concept-card:nth-child(6)  { animation-delay: 0.24s; }
+.concept-card:nth-child(7)  { animation-delay: 0.28s; }
+.concept-card:nth-child(8)  { animation-delay: 0.32s; }
+.concept-card:nth-child(9)  { animation-delay: 0.36s; }
+.concept-card:nth-child(10) { animation-delay: 0.40s; }
+.concept-card:nth-child(11) { animation-delay: 0.44s; }
+.concept-card:nth-child(12) { animation-delay: 0.48s; }
+.concept-card:nth-child(13) { animation-delay: 0.52s; }
+.concept-card:nth-child(14) { animation-delay: 0.56s; }
+.concept-card:nth-child(15) { animation-delay: 0.60s; }
+.concept-card:nth-child(16) { animation-delay: 0.64s; }
+
+/* ─── Hero entrance ─── */
+@keyframes hero-fade-up {
   from {
     opacity: 0;
     transform: translate3d(0, 24px, 0);
@@ -101,42 +142,8 @@
   }
 }
 
-.concept-card {
-  opacity: 0;
-  animation: card-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.concept-card:nth-child(1)  { animation-delay: 0.05s; }
-.concept-card:nth-child(2)  { animation-delay: 0.1s; }
-.concept-card:nth-child(3)  { animation-delay: 0.15s; }
-.concept-card:nth-child(4)  { animation-delay: 0.2s; }
-.concept-card:nth-child(5)  { animation-delay: 0.25s; }
-.concept-card:nth-child(6)  { animation-delay: 0.3s; }
-.concept-card:nth-child(7)  { animation-delay: 0.35s; }
-.concept-card:nth-child(8)  { animation-delay: 0.4s; }
-.concept-card:nth-child(9)  { animation-delay: 0.45s; }
-.concept-card:nth-child(10) { animation-delay: 0.5s; }
-.concept-card:nth-child(11) { animation-delay: 0.55s; }
-.concept-card:nth-child(12) { animation-delay: 0.6s; }
-.concept-card:nth-child(13) { animation-delay: 0.65s; }
-.concept-card:nth-child(14) { animation-delay: 0.7s; }
-.concept-card:nth-child(15) { animation-delay: 0.75s; }
-.concept-card:nth-child(16) { animation-delay: 0.8s; }
-
-/* ─── Hero entrance ─── */
-@keyframes hero-fade-up {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 20px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
 .hero-animate {
-  animation: hero-fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: hero-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes divider-draw {
@@ -144,11 +151,21 @@
   to { transform: scaleX(1); }
 }
 
-/* ─── Mesh drift — NO blur, just soft radial-gradient ─── */
+/* ─── Mesh drift — radial gradient, no blur filter ─── */
 @keyframes mesh-drift {
   0%, 100% { transform: translate3d(0, 0, 0); }
   33% { transform: translate3d(30px, -20px, 0); }
   66% { transform: translate3d(-20px, 15px, 0); }
+}
+
+/* ─── Page transition ─── */
+@keyframes page-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.page-enter {
+  animation: page-enter 0.25s ease-out;
 }
 
 /* ─── SVG dash ─── */
@@ -166,12 +183,8 @@
   100% { transform: translateX(200%) rotate(-45deg); }
 }
 
-/* ─── Page transition ─── */
-@keyframes page-enter {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.page-enter {
-  animation: page-enter 0.3s ease-out;
+/* ─── Pulse glow for hero icon ─── */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.15; transform: scale(1.15); }
 }

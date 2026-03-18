@@ -22,10 +22,8 @@ const GalleryPage = () => {
       <HeroSection filter={filter} setFilter={setFilter} />
 
       <section className="mx-auto w-full max-w-7xl flex-1 px-4 pb-16">
-        {/* Separator */}
         <div className="h-px mx-auto mb-10 max-w-2xl bg-gradient-to-r from-transparent via-[rgba(255,255,255,0.06)] to-transparent" />
 
-        {/* Count indicator */}
         <div className="flex justify-end mb-4">
           <span className="text-xs text-muted-foreground/40 font-mono">
             Showing {filtered.length} of {concepts.length} concepts

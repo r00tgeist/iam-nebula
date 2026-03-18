@@ -1,17 +1,14 @@
 import { lazy, Suspense, ComponentType } from "react";
 
-// Lazy-load all showcases
 const showcaseMap: Record<string, () => Promise<{ default: ComponentType }>> = {
-  // Basic concepts
   "authn": () => import("./AuthNShowcase"),
   "authz": () => import("./AuthZShowcase"),
   "least-privilege": () => import("./LeastPrivilegeShowcase"),
+  "rbac": () => import("./RBACShowcase"),
   "mfa": () => import("./MFAShowcase"),
   "sso": () => import("./SSOShowcase"),
   "password-policies": () => import("./PasswordPoliciesShowcase"),
-  "rbac": () => import("./RBACShowcase"),
   "session-management": () => import("./SessionManagementShowcase"),
-  // Advanced concepts
   "abac": () => import("./ABACShowcase"),
   "pbac": () => import("./PBACShowcase"),
   "zero-trust": () => import("./ZeroTrustShowcase"),
@@ -22,10 +19,8 @@ const showcaseMap: Record<string, () => Promise<{ default: ComponentType }>> = {
   "iga": () => import("./IGAShowcase"),
 };
 
-// Check if a concept has a showcase
 export const hasShowcase = (conceptId: string): boolean => conceptId in showcaseMap;
 
-// Loading placeholder
 const ShowcaseLoader = () => (
   <div className="glass-card p-8 flex items-center justify-center">
     <div className="flex items-center gap-3 text-muted-foreground">
@@ -35,13 +30,10 @@ const ShowcaseLoader = () => (
   </div>
 );
 
-// Render showcase by concept ID
 export const ConceptShowcase = ({ conceptId }: { conceptId: string }) => {
   const loader = showcaseMap[conceptId];
   if (!loader) return null;
-
   const LazyComponent = lazy(loader);
-
   return (
     <Suspense fallback={<ShowcaseLoader />}>
       <LazyComponent />
