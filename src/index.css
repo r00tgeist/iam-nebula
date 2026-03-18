@@ -166,7 +166,7 @@
   100% { transform: translateX(200%) rotate(-45deg); }
 }
 
-/* ─── Page enter ─── */
+/* ─── Page transition ─── */
 @keyframes page-enter {
   from { opacity: 0; }
   to { opacity: 1; }

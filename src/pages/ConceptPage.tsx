@@ -1,13 +1,14 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
 import { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, HelpCircle, AlertTriangle, Lightbulb } from "lucide-react";
+import { ArrowLeft, ArrowRight, HelpCircle, AlertTriangle, Lightbulb, ChevronLeft, ChevronRight } from "lucide-react";
 import { concepts } from "@/data/concepts";
 import { connections } from "@/data/connections";
 import RoadmapDiagram from "@/components/RoadmapDiagram";
 import LucideIcon from "@/components/LucideIcon";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ToolsCTA from "@/components/ToolsCTA";
 import { ConceptShowcase, hasShowcase } from "@/components/showcases/index";
 
 const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
@@ -15,13 +16,27 @@ const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
 const ConceptPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const concept = concepts.find((c) => c.id === id);
+  const conceptIndex = concepts.findIndex((c) => c.id === id);
+  const concept = conceptIndex >= 0 ? concepts[conceptIndex] : null;
   const conceptConnections = connections.find((c) => c.conceptId === id);
+
+  const prevConcept = conceptIndex > 0 ? concepts[conceptIndex - 1] : null;
+  const nextConcept = conceptIndex < concepts.length - 1 ? concepts[conceptIndex + 1] : null;
 
   // Scroll to top on concept change
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [id]);
+
+  // Dynamic page title
+  useEffect(() => {
+    if (concept) {
+      document.title = `${concept.title} — IAM Decoded`;
+    }
+    return () => {
+      document.title = "IAM Decoded — Master Identity & Access Management";
+    };
+  }, [concept]);
 
   if (!concept) {
     return (
@@ -34,13 +49,8 @@ const ConceptPage = () => {
   const isCyan = concept.category === "basic";
   const showShowcase = id && hasShowcase(id);
 
-  // Prev / Next navigation
-  const currentIndex = concepts.findIndex((c) => c.id === id);
-  const prev = currentIndex > 0 ? concepts[currentIndex - 1] : null;
-  const next = currentIndex < concepts.length - 1 ? concepts[currentIndex + 1] : null;
-
   return (
-    <div className="page-enter flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col page-enter">
       <Navbar />
 
       <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
@@ -119,69 +129,93 @@ const ConceptPage = () => {
           </motion.div>
         )}
 
-        {/* Description sections */}
+        {/* Tools CTA */}
         <motion.div
-          className="mt-16 space-y-8 pb-8"
+          className="mt-12"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ ...spring, delay: showShowcase ? 0.45 : 0.4 }}
+          transition={{ ...spring, delay: showShowcase ? 0.4 : 0.3 }}
+        >
+          <ToolsCTA conceptId={id!} />
+        </motion.div>
+
+        {/* Description sections */}
+        <motion.div
+          className="mt-16 space-y-8"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...spring, delay: showShowcase ? 0.5 : 0.4 }}
         >
           <div>
-            <h2 className="font-display text-xl font-bold text-foreground flex items-center gap-2">
-              <HelpCircle size={20} className="text-primary" />
-              What is it?
-            </h2>
-            <p className="mt-3 text-muted-foreground leading-relaxed">
+            <div className="flex items-center gap-2 mb-3">
+              <HelpCircle size={18} className={isCyan ? "text-primary" : "text-secondary"} />
+              <h2 className="font-display text-xl font-bold text-foreground">
+                What is it?
+              </h2>
+            </div>
+            <p className="text-muted-foreground leading-relaxed">
               {concept.whatIsIt}
             </p>
           </div>
 
           <div>
-            <h2 className="font-display text-xl font-bold text-foreground flex items-center gap-2">
-              <AlertTriangle size={20} className="text-primary" />
-              Why it matters
-            </h2>
-            <p className="mt-3 text-muted-foreground leading-relaxed">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle size={18} className={isCyan ? "text-primary" : "text-secondary"} />
+              <h2 className="font-display text-xl font-bold text-foreground">
+                Why it matters
+              </h2>
+            </div>
+            <p className="text-muted-foreground leading-relaxed">
               {concept.whyItMatters}
             </p>
           </div>
 
           <div className={`glass-card border-l-2 p-5 ${isCyan ? "border-l-primary" : "border-l-secondary"}`}>
-            <h3 className={`font-display text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${isCyan ? "text-primary" : "text-secondary"}`}>
-              <Lightbulb size={16} />
-              Key Takeaway
-            </h3>
-            <p className="mt-2 text-foreground leading-relaxed">
+            <div className="flex items-center gap-2 mb-2">
+              <Lightbulb size={14} className={isCyan ? "text-primary" : "text-secondary"} />
+              <h3 className={`font-display text-sm font-bold uppercase tracking-wider ${isCyan ? "text-primary" : "text-secondary"}`}>
+                Key Takeaway
+              </h3>
+            </div>
+            <p className="text-foreground leading-relaxed">
               {concept.keyTakeaway}
             </p>
           </div>
         </motion.div>
 
         {/* Prev / Next navigation */}
-        <div className="flex items-center justify-between border-t border-border/40 pt-6 pb-4">
-          {prev ? (
-            <Link
-              to={`/concept/${prev.id}`}
-              className="flex items-center gap-2 rounded-xl border border-border/40 px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground hover:border-border"
+        <div className="mt-16 mb-8 flex items-stretch gap-4">
+          {prevConcept ? (
+            <button
+              onClick={() => navigate(`/concept/${prevConcept.id}`)}
+              className="flex-1 flex items-center gap-3 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[rgba(0,0,0,0.1)] px-5 py-4 text-left transition-all hover:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.02)] group"
             >
-              <ArrowLeft size={14} />
-              <span className="hidden sm:inline">{prev.shortTitle}</span>
-              <span className="sm:hidden">Previous</span>
-            </Link>
+              <ChevronLeft size={16} className="text-muted-foreground/40 group-hover:text-foreground transition-colors shrink-0" />
+              <div>
+                <p className="text-[10px] font-mono text-muted-foreground/40 uppercase tracking-wider">Previous</p>
+                <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                  {prevConcept.shortTitle}
+                </p>
+              </div>
+            </button>
           ) : (
-            <div />
+            <div className="flex-1" />
           )}
-          {next ? (
-            <Link
-              to={`/concept/${next.id}`}
-              className="flex items-center gap-2 rounded-xl border border-border/40 px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground hover:border-border"
+          {nextConcept ? (
+            <button
+              onClick={() => navigate(`/concept/${nextConcept.id}`)}
+              className="flex-1 flex items-center justify-end gap-3 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[rgba(0,0,0,0.1)] px-5 py-4 text-right transition-all hover:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.02)] group"
             >
-              <span className="hidden sm:inline">{next.shortTitle}</span>
-              <span className="sm:hidden">Next</span>
-              <ArrowRight size={14} />
-            </Link>
+              <div>
+                <p className="text-[10px] font-mono text-muted-foreground/40 uppercase tracking-wider">Next</p>
+                <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                  {nextConcept.shortTitle}
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-muted-foreground/40 group-hover:text-foreground transition-colors shrink-0" />
+            </button>
           ) : (
-            <div />
+            <div className="flex-1" />
           )}
         </div>
       </div>
