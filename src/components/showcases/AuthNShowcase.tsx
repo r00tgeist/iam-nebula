@@ -680,7 +680,7 @@ const AuthNShowcase = () => {
                 </p>
                 {success && (
                   <div className="mt-3 rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgba(0,0,0,0.2)] p-3 font-mono text-[10px] text-muted-foreground space-y-1">
-                    <p><span className="text-primary">sub:</span> alex@a1.bg</p>
+                    <p><span className="text-primary">sub:</span> user@example.com</p>
                     <p><span className="text-primary">amr:</span> [{method === "password" ? '"pwd"' : method === "biometric" ? '"fpt"' : '"otp"'}]</p>
                     <p><span className="text-primary">exp:</span> {Math.floor(Date.now() / 1000) + 900}</p>
                     <p><span className="text-primary">iss:</span> https://auth.example.com</p>

@@ -114,7 +114,7 @@ const SessionManagementShowcase = () => {
             <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[rgba(0,0,0,0.15)] p-5 font-mono text-[11px] space-y-2">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-sans font-medium mb-2">Session Details</p>
               <div className="flex justify-between"><span className="text-muted-foreground">sid</span><span className="text-foreground">sess_a7f2…k9x1</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">user</span><span className="text-foreground">alex@a1.bg</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">user</span><span className="text-foreground">user@example.com</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">ttl</span><span className="text-foreground">{ttl} ticks</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">refreshes</span><span className="text-primary">{refreshCount}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">status</span>
