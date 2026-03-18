@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, HelpCircle, AlertTriangle, Lightbulb, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, HelpCircle, AlertTriangle, Lightbulb, ChevronLeft, ChevronRight } from "lucide-react";
 import { concepts } from "@/data/concepts";
 import { connections } from "@/data/connections";
 import RoadmapDiagram from "@/components/RoadmapDiagram";
@@ -23,12 +23,10 @@ const ConceptPage = () => {
   const prevConcept = conceptIndex > 0 ? concepts[conceptIndex - 1] : null;
   const nextConcept = conceptIndex < concepts.length - 1 ? concepts[conceptIndex + 1] : null;
 
-  // Scroll to top on concept change
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [id]);
 
-  // Dynamic page title
   useEffect(() => {
     if (concept) {
       document.title = `${concept.title} — IAM Decoded`;
@@ -54,7 +52,6 @@ const ConceptPage = () => {
       <Navbar />
 
       <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
-        {/* Top bar */}
         <motion.div
           className="flex items-center gap-4"
           initial={{ opacity: 0, x: -20 }}
@@ -79,7 +76,6 @@ const ConceptPage = () => {
           </span>
         </motion.div>
 
-        {/* Title */}
         <motion.div
           className="mt-6"
           initial={{ opacity: 0, y: 20 }}
@@ -105,7 +101,6 @@ const ConceptPage = () => {
           </p>
         </motion.div>
 
-        {/* Interactive Showcase */}
         {showShowcase && (
           <motion.div
             className="mt-12"
@@ -117,7 +112,6 @@ const ConceptPage = () => {
           </motion.div>
         )}
 
-        {/* Roadmap */}
         {conceptConnections && (
           <motion.div
             className="mt-12"
@@ -129,7 +123,6 @@ const ConceptPage = () => {
           </motion.div>
         )}
 
-        {/* Tools CTA */}
         <motion.div
           className="mt-12"
           initial={{ opacity: 0, y: 30 }}
@@ -139,7 +132,6 @@ const ConceptPage = () => {
           <ToolsCTA conceptId={id!} />
         </motion.div>
 
-        {/* Description sections */}
         <motion.div
           className="mt-16 space-y-8"
           initial={{ opacity: 0, y: 30 }}
@@ -183,7 +175,6 @@ const ConceptPage = () => {
           </div>
         </motion.div>
 
-        {/* Prev / Next navigation */}
         <div className="mt-16 mb-8 flex items-stretch gap-4">
           {prevConcept ? (
             <button
