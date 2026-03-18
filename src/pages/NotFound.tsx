@@ -1,41 +1,37 @@
-import { useLocation, Link } from "react-router-dom";
-import { useEffect } from "react";
-import { ShieldX } from "lucide-react";
-import Navbar from "@/components/Navbar";
+import { useNavigate } from "react-router-dom";
+import { ShieldX, ArrowLeft } from "lucide-react";
 
 const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
+  const navigate = useNavigate();
 
   return (
-    <div className="page-enter flex min-h-screen flex-col">
-      <Navbar />
-      <div className="flex flex-1 flex-col items-center justify-center px-4">
-        <div className="relative flex flex-col items-center text-center">
-          {/* Decorative background icon */}
-          <ShieldX
-            size={80}
-            className="absolute -top-4 text-muted-foreground/[0.06]"
-            strokeWidth={1}
-          />
-
-          <h1 className="font-display text-7xl font-extrabold text-gradient-primary sm:text-8xl relative z-10">
-            404
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground">
-            This concept doesn't exist yet.
-          </p>
-          <Link
-            to="/"
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-shadow hover:shadow-[0_0_30px_rgba(0,229,255,0.15)]"
-          >
-            ← Back to Gallery
-          </Link>
-        </div>
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 page-enter">
+      {/* Background icon */}
+      <div className="relative">
+        <ShieldX
+          size={120}
+          className="text-muted-foreground/[0.04] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          strokeWidth={1}
+        />
+        <h1 className="font-display text-8xl sm:text-9xl font-extrabold text-gradient-primary relative z-10">
+          404
+        </h1>
       </div>
+
+      <p className="mt-4 text-lg text-muted-foreground text-center">
+        This concept doesn't exist yet.
+      </p>
+      <p className="mt-1 text-sm text-muted-foreground/50 text-center">
+        Or maybe it's just waiting to be discovered.
+      </p>
+
+      <button
+        onClick={() => navigate("/")}
+        className="mt-8 flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-6 py-2.5 text-sm font-semibold text-primary hover:bg-primary/15 transition-colors"
+      >
+        <ArrowLeft size={14} />
+        Back to Gallery
+      </button>
     </div>
   );
 };
