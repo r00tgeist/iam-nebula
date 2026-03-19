@@ -80,7 +80,7 @@ const Footer = () => {
         {/* Bottom line */}
         <div className="mt-6 pt-5 border-t border-[rgba(255,255,255,0.03)] flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-[10px] text-muted-foreground/30 font-mono">
-            © {new Date().getFullYear()} IAM Decoded. All rights reserved.
+            © {new Date().getFullYear()} IAM Decoded · by rootgeist
           </p>
           <p className="text-[10px] text-muted-foreground/20 font-mono">
             Built with React + TypeScript + Framer Motion
