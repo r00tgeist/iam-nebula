@@ -56,13 +56,9 @@ const Footer = () => {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <KeyRound size={16} />
             </div>
-            <div className="flex items-center gap-2">
-              <p className="font-display text-sm font-bold text-gradient-primary">
-                IAM Decoded
+              <p className="font-display text-sm font-bold text-gradient-primary leading-none">
+                IAM Decoded <span className="font-mono text-xs font-normal text-muted-foreground/50">· by <span className="text-gradient-primary font-semibold">rootgeist</span></span>
               </p>
-              <span className="text-muted-foreground/25">·</span>
-              <span className="text-xs font-mono text-muted-foreground/50">
-                by <span className="text-gradient-primary font-semibold">rootgeist</span>
               </span>
             </div>
           </div>
