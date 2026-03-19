@@ -51,16 +51,20 @@ const Footer = () => {
       {/* Main footer */}
       <div className="mx-auto max-w-7xl px-4 py-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-          {/* Brand */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <KeyRound size={16} />
-            </div>
-            <div>
+          {/* Brand + Creator */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <KeyRound size={16} />
+              </div>
               <p className="font-display text-sm font-bold text-gradient-primary">
                 IAM Decoded
               </p>
             </div>
+            <span className="text-muted-foreground/20 text-lg">·</span>
+            <span className="text-xs font-mono text-muted-foreground/50 tracking-wide">
+              by <span className="text-gradient-primary font-semibold">rootgeist</span>
+            </span>
           </div>
 
           {/* Quick links */}
@@ -80,7 +84,7 @@ const Footer = () => {
         {/* Bottom line */}
         <div className="mt-6 pt-5 border-t border-[rgba(255,255,255,0.03)] flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-[10px] text-muted-foreground/30 font-mono">
-            © {new Date().getFullYear()} IAM Decoded · by rootgeist
+            © {new Date().getFullYear()} IAM Decoded
           </p>
           <p className="text-[10px] text-muted-foreground/20 font-mono">
             Built with React + TypeScript + Framer Motion
