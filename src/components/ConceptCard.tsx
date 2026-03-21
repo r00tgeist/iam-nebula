@@ -1,9 +1,10 @@
+import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Concept } from "@/data/concepts";
 import LucideIcon from "@/components/LucideIcon";
 import { ArrowRight } from "lucide-react";
 
-const ConceptCard = ({ concept, index }: { concept: Concept; index: number }) => {
+const ConceptCard = memo(({ concept }: { concept: Concept; index: number }) => {
   const navigate = useNavigate();
   const isCyan = concept.category === "basic";
 
@@ -12,7 +13,6 @@ const ConceptCard = ({ concept, index }: { concept: Concept; index: number }) =>
       onClick={() => navigate(`/concept/${concept.id}`)}
       className="concept-card group cursor-pointer rounded-xl bg-card/60 p-6 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:bg-card/90"
     >
-      {/* Top row: badge + arrow */}
       <div className="flex items-center justify-between mb-6">
         <span
           className={`inline-block rounded-full px-3 py-0.5 text-[10px] font-semibold font-mono uppercase tracking-wider ${
@@ -29,7 +29,6 @@ const ConceptCard = ({ concept, index }: { concept: Concept; index: number }) =>
         />
       </div>
 
-      {/* Icon */}
       <div className="flex justify-center mb-5">
         <div className="relative">
           <div
@@ -49,17 +48,14 @@ const ConceptCard = ({ concept, index }: { concept: Concept; index: number }) =>
         </div>
       </div>
 
-      {/* Title */}
       <h3 className="font-display text-center text-base font-bold text-foreground/90 group-hover:text-foreground transition-colors duration-200">
         {concept.shortTitle}
       </h3>
 
-      {/* Description */}
       <p className="mt-2 text-center text-[13px] text-muted-foreground/60 leading-relaxed group-hover:text-muted-foreground/80 transition-colors duration-200">
         {concept.description}
       </p>
 
-      {/* Bottom accent line */}
       <div className="mt-5 flex justify-center">
         <div
           className={`h-px w-0 group-hover:w-12 transition-all duration-500 ease-out ${
@@ -69,6 +65,8 @@ const ConceptCard = ({ concept, index }: { concept: Concept; index: number }) =>
       </div>
     </div>
   );
-};
+});
+
+ConceptCard.displayName = "ConceptCard";
 
 export default ConceptCard;

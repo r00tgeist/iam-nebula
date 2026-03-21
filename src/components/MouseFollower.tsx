@@ -5,33 +5,53 @@ const MouseFollower = () => {
   const rafRef = useRef<number>();
   const posRef = useRef({ x: -9999, y: -9999 });
   const targetRef = useRef({ x: -9999, y: -9999 });
+  const activeRef = useRef(false);
 
   const lerp = useCallback(() => {
     const ease = 0.1;
-    posRef.current.x += (targetRef.current.x - posRef.current.x) * ease;
-    posRef.current.y += (targetRef.current.y - posRef.current.y) * ease;
+    const dx = targetRef.current.x - posRef.current.x;
+    const dy = targetRef.current.y - posRef.current.y;
+
+    // Stop the loop when close enough (< 0.5px)
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+      posRef.current.x = targetRef.current.x;
+      posRef.current.y = targetRef.current.y;
+      if (ref.current) {
+        ref.current.style.transform = `translate3d(${posRef.current.x - 300}px, ${posRef.current.y - 300}px, 0)`;
+      }
+      activeRef.current = false;
+      return;
+    }
+
+    posRef.current.x += dx * ease;
+    posRef.current.y += dy * ease;
 
     if (ref.current) {
-      // GPU-composited transform instead of repainting background every frame
       ref.current.style.transform = `translate3d(${posRef.current.x - 300}px, ${posRef.current.y - 300}px, 0)`;
     }
     rafRef.current = requestAnimationFrame(lerp);
   }, []);
 
+  const startLoop = useCallback(() => {
+    if (!activeRef.current) {
+      activeRef.current = true;
+      rafRef.current = requestAnimationFrame(lerp);
+    }
+  }, [lerp]);
+
   useEffect(() => {
-    // Skip entirely on touch devices
     if (window.matchMedia("(pointer: coarse)").matches) return;
 
     const handler = (e: MouseEvent) => {
       targetRef.current = { x: e.clientX, y: e.clientY };
+      startLoop();
     };
     window.addEventListener("mousemove", handler, { passive: true });
-    rafRef.current = requestAnimationFrame(lerp);
     return () => {
       window.removeEventListener("mousemove", handler);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [lerp]);
+  }, [startLoop]);
 
   return (
     <div
