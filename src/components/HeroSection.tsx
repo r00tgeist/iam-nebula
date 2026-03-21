@@ -65,7 +65,7 @@ const HeroSection = ({
 
       {/* Title */}
       <h1
-        className="hero-animate font-display relative z-10 text-5xl font-extrabold tracking-tight sm:text-7xl md:text-8xl text-gradient-primary"
+        className="hero-animate font-display relative z-10 text-4xl font-extrabold tracking-tight sm:text-7xl md:text-8xl text-gradient-primary text-center"
         style={{ animationDelay: "0.1s" }}
       >
         IAM Decoded
