@@ -39,7 +39,6 @@ const HeroSection = ({
           style={{
             background: "radial-gradient(circle, hsla(220,70%,30%,0.08) 0%, transparent 60%)",
             animation: "mesh-drift 24s ease-in-out infinite",
-            willChange: "transform",
           }}
         />
       </div>
