@@ -52,13 +52,14 @@ const Footer = () => {
       <div className="mx-auto max-w-7xl px-4 py-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
           {/* Brand + Creator */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <KeyRound size={16} />
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <KeyRound size={14} />
             </div>
-            <p className="font-display text-sm font-bold text-gradient-primary leading-none">
-              IAM Decoded <span className="font-mono text-xs font-normal text-muted-foreground/50">· by <span className="text-gradient-primary font-semibold">rootgeist</span></span>
-            </p>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-display text-sm font-bold text-gradient-primary">IAM Decoded</span>
+              <span className="font-mono text-[10px] text-muted-foreground/40">by <span className="text-gradient-primary font-medium">rootgeist</span></span>
+            </div>
           </div>
 
           {/* Quick links */}
