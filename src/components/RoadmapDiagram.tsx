@@ -371,31 +371,54 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
             const to = layout[link.to];
             if (!from || !to) return null;
             const active = isLinkActive(link.from, link.to);
+            const dimmed = activeNode !== null && !active;
             const a = arrow(from.x, from.y, to.x, to.y, NODE_R + 4, NODE_R + 8);
             return (
-              <motion.g key={`xl-${i}`}>
+              <g key={`xl-${i}`}>
                 <motion.line
                   x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
-                  stroke={active ? accent : "rgba(255,255,255,0.08)"}
+                  stroke={active ? accent : "rgba(255,255,255,0.12)"}
                   strokeWidth={active ? 1.6 : 0.8}
-                  strokeDasharray={active ? "0" : "3 4"}
+                  strokeDasharray="4 5"
+                  strokeOpacity={dimmed ? 0.15 : 1}
                   markerEnd={`url(#arrow-${active ? "active-" : "dim-"}${concept.id})`}
                   initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.03 * i }}
-                  style={{ transition: "stroke 0.2s, stroke-width 0.2s, stroke-dasharray 0.2s" }}
+                  animate={{
+                    pathLength: 1,
+                    opacity: 1,
+                    strokeDashoffset: [0, -18],
+                  }}
+                  transition={{
+                    pathLength: { duration: 0.5, delay: 0.03 * i },
+                    opacity: { duration: 0.4, delay: 0.03 * i },
+                    strokeDashoffset: {
+                      duration: active ? 0.9 : 2,
+                      repeat: Infinity,
+                      ease: "linear",
+                    },
+                  }}
+                  style={{ transition: "stroke 0.25s, stroke-width 0.25s, stroke-opacity 0.25s" }}
                 />
-                {/* Flowing dot when active */}
-                {active && (
-                  <motion.circle
-                    r="2.5"
-                    fill={accent}
-                    initial={{ cx: a.x1, cy: a.y1 }}
-                    animate={{ cx: [a.x1, a.x2], cy: [a.y1, a.y2] }}
-                    transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
-                  />
-                )}
-              </motion.g>
+                {/* Permanent flowing dot on every cross-link */}
+                <motion.circle
+                  r={active ? 2.6 : 1.6}
+                  fill={active ? accent : accentSoft}
+                  fillOpacity={dimmed ? 0.25 : active ? 1 : 0.85}
+                  initial={{ cx: a.x1, cy: a.y1, opacity: 0 }}
+                  animate={{
+                    cx: [a.x1, a.x2],
+                    cy: [a.y1, a.y2],
+                    opacity: [0, 1, 1, 0],
+                  }}
+                  transition={{
+                    duration: active ? 1.3 : 2.6,
+                    repeat: Infinity,
+                    ease: "linear",
+                    delay: 0.15 * (i % 5),
+                    times: [0, 0.12, 0.88, 1],
+                  }}
+                />
+              </g>
             );
           })}
 
