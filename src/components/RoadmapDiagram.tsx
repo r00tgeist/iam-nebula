@@ -83,14 +83,17 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
   }, [concept.id]);
 
   // Layout (SVG)
-  const W = 900;
-  const H = 540;
-  const SOURCE_X = 90;
+  const W = 980;
+  const H = 600;
+  const SOURCE_X = 110;
   const SOURCE_Y = H / 2;
-  const SOURCE_R = 38;
-  const LANE_X = [320, 560, 800];
-  const NODE_R = 22;
-  const LANE_HEADER_Y = 50;
+  const SOURCE_R = 44;
+  const LANE_X = [340, 620, 880];
+  // Pill node dimensions
+  const NODE_W = 150;
+  const NODE_H = 44;
+  const NODE_RX = NODE_H / 2;
+  const LANE_HEADER_Y = 54;
 
   // Position nodes vertically within each lane column
   const layout = useMemo(() => {
@@ -99,8 +102,8 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
       const items = lanes[lane];
       const x = LANE_X[laneIdx];
       const n = items.length;
-      const usableTop = 110;
-      const usableBottom = H - 40;
+      const usableTop = 120;
+      const usableBottom = H - 50;
       const span = usableBottom - usableTop;
       items.forEach((item, i) => {
         const y = n === 1 ? (usableTop + usableBottom) / 2 : usableTop + (span * i) / (n - 1);
@@ -110,18 +113,16 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
     return map;
   }, [lanes]);
 
-  // Helper: shorten arrow at endpoints
-  const arrow = (x1: number, y1: number, x2: number, y2: number, padStart = 0, padEnd = NODE_R + 8) => {
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const d = Math.sqrt(dx * dx + dy * dy) || 1;
-    const ux = dx / d;
-    const uy = dy / d;
+  // Helper: compute a bezier curve path between two points (anchored to pill edges)
+  const curve = (x1: number, y1: number, x2: number, y2: number, startW = 0, endW = NODE_W / 2 + 10) => {
+    const sx = x1 + startW;
+    const ex = x2 - endW;
+    const dx = ex - sx;
+    const cx1 = sx + dx * 0.5;
+    const cx2 = ex - dx * 0.5;
     return {
-      x1: x1 + ux * padStart,
-      y1: y1 + uy * padStart,
-      x2: x2 - ux * padEnd,
-      y2: y2 - uy * padEnd,
+      d: `M ${sx},${y1} C ${cx1},${y1} ${cx2},${y2} ${ex},${y2}`,
+      sx, sy: y1, ex, ey: y2,
     };
   };
 
