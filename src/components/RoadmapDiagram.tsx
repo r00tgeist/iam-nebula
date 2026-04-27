@@ -270,24 +270,60 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
           {phase >= 3 && LANE_ORDER.map((lane) => {
             const items = lanes[lane];
             return items.map((item, i) => {
-              // Only draw source→protocol arrows (first lane); others get cross-links
               if (lane !== "protocol") return null;
               const pos = layout[item.id];
               const a = arrow(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 4, NODE_R + 6);
               const active = isLinkActive("__source__", item.id) || activeNode === item.id;
+              const dimmed = activeNode !== null && !active;
               return (
-                <motion.line
-                  key={`src-${item.id}`}
-                  x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
-                  stroke={active ? accent : accentSoft}
-                  strokeWidth={active ? 1.8 : 1}
-                  strokeOpacity={active ? 1 : 0.5}
-                  markerEnd={`url(#arrow-${active ? "active-" : ""}${concept.id})`}
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ duration: 0.6, delay: 0.05 * i, ease: "easeOut" }}
-                  style={{ transition: "stroke 0.2s, stroke-width 0.2s" }}
-                />
+                <g key={`src-${item.id}`}>
+                  <motion.line
+                    x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
+                    stroke={active ? accent : accentSoft}
+                    strokeWidth={active ? 1.8 : 1}
+                    strokeOpacity={dimmed ? 0.18 : active ? 1 : 0.55}
+                    strokeDasharray="6 4"
+                    markerEnd={`url(#arrow-${active ? "active-" : ""}${concept.id})`}
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{
+                      pathLength: 1,
+                      opacity: 1,
+                      strokeDashoffset: [0, -20],
+                    }}
+                    transition={{
+                      pathLength: { duration: 0.6, delay: 0.05 * i, ease: "easeOut" },
+                      opacity: { duration: 0.4, delay: 0.05 * i },
+                      strokeDashoffset: {
+                        duration: active ? 0.8 : 1.6,
+                        repeat: Infinity,
+                        ease: "linear",
+                      },
+                    }}
+                    style={{ transition: "stroke 0.25s, stroke-width 0.25s, stroke-opacity 0.25s" }}
+                  />
+                  {/* Permanent flowing dot — multiple staggered for richer motion */}
+                  {[0, 0.5].map((offset) => (
+                    <motion.circle
+                      key={`dot-${item.id}-${offset}`}
+                      r={active ? 2.8 : 1.8}
+                      fill={accent}
+                      fillOpacity={dimmed ? 0.2 : active ? 1 : 0.7}
+                      initial={{ cx: a.x1, cy: a.y1, opacity: 0 }}
+                      animate={{
+                        cx: [a.x1, a.x2],
+                        cy: [a.y1, a.y2],
+                        opacity: [0, 1, 1, 0],
+                      }}
+                      transition={{
+                        duration: active ? 1.4 : 2.4,
+                        repeat: Infinity,
+                        ease: "linear",
+                        delay: 0.05 * i + offset * (active ? 1.4 : 2.4),
+                        times: [0, 0.1, 0.9, 1],
+                      }}
+                    />
+                  ))}
+                </g>
               );
             });
           })}
