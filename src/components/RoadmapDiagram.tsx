@@ -322,9 +322,10 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
                   {[0, 0.5].map((offset) => (
                     <motion.circle
                       key={`dot-${item.id}-${offset}`}
-                      r={active ? 2.8 : 1.8}
+                      r={active ? 3.2 : 2.2}
                       fill={accent}
-                      fillOpacity={dimmed ? 0.2 : active ? 1 : 0.7}
+                      fillOpacity={dimmed ? 0.2 : active ? 1 : 0.85}
+                      filter={`url(#glow-${active ? "strong-" : ""}${concept.id})`}
                       initial={{ cx: a.x1, cy: a.y1, opacity: 0 }}
                       animate={{
                         cx: [a.x1, a.x2],
