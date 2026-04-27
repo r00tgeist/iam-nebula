@@ -519,39 +519,70 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
           <AnimatePresence>
             {phase >= 1 && (
               <motion.g
-                initial={{ scale: 0, opacity: 0 }}
+                initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={spring}
                 style={{ transformOrigin: `${SOURCE_X}px ${SOURCE_Y}px` }}
               >
-                <circle cx={SOURCE_X} cy={SOURCE_Y} r={SOURCE_R + 22} fill={`url(#src-grad-${concept.id})`} />
-                <motion.circle
-                  cx={SOURCE_X} cy={SOURCE_Y}
-                  r={SOURCE_R + 4}
+                {/* Outer glow halo */}
+                <circle
+                  cx={SOURCE_X} cy={SOURCE_Y} r={SOURCE_R + 40}
+                  fill={`url(#source-orb-${concept.id})`}
+                />
+                {/* Pulsing rings */}
+                {[0, 0.8, 1.6].map((delay) => (
+                  <motion.circle
+                    key={`ring-${delay}`}
+                    cx={SOURCE_X} cy={SOURCE_Y}
+                    r={SOURCE_R + 2}
+                    fill="none"
+                    stroke={accent}
+                    strokeWidth="1"
+                    initial={{ r: SOURCE_R + 2, opacity: 0.5 }}
+                    animate={{ r: SOURCE_R + 30, opacity: 0 }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut", delay }}
+                  />
+                ))}
+                {/* Outer ring */}
+                <circle
+                  cx={SOURCE_X} cy={SOURCE_Y} r={SOURCE_R + 6}
                   fill="none"
                   stroke={accent}
-                  strokeOpacity="0.3"
                   strokeWidth="1"
-                  initial={{ r: SOURCE_R + 4, opacity: 0.3 }}
-                  animate={{ r: SOURCE_R + 22, opacity: 0 }}
-                  transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut" }}
+                  strokeOpacity="0.35"
+                  strokeDasharray="3 3"
                 />
+                {/* Main orb */}
                 <circle
                   cx={SOURCE_X} cy={SOURCE_Y} r={SOURCE_R}
-                  fill={isCyan ? "rgba(0,229,255,0.15)" : "rgba(139,92,246,0.15)"}
+                  fill={`url(#source-orb-${concept.id})`}
                   stroke={accent}
-                  strokeWidth="1.5"
-                  strokeOpacity="0.6"
+                  strokeWidth="1.8"
+                  strokeOpacity="0.85"
+                  filter={`url(#glow-${concept.id})`}
                 />
-                <foreignObject x={SOURCE_X - 22} y={SOURCE_Y - 22} width={44} height={44}>
+                {/* Inner highlight */}
+                <circle
+                  cx={SOURCE_X - 8} cy={SOURCE_Y - 10} r={SOURCE_R * 0.45}
+                  fill="rgba(255,255,255,0.08)"
+                />
+                <foreignObject x={SOURCE_X - 26} y={SOURCE_Y - 26} width={52} height={52}>
                   <div className="flex h-full w-full items-center justify-center">
                     <div className={isCyan ? "text-primary" : "text-secondary"}>
-                      <LucideIcon name={concept.icon} size={26} />
+                      <LucideIcon name={concept.icon} size={30} />
                     </div>
                   </div>
                 </foreignObject>
+                {/* Title plate below */}
+                <rect
+                  x={SOURCE_X - 70} y={SOURCE_Y + SOURCE_R + 14}
+                  width={140} height={38} rx={8}
+                  fill="rgba(255,255,255,0.02)"
+                  stroke="rgba(255,255,255,0.06)"
+                  strokeWidth="1"
+                />
                 <text
-                  x={SOURCE_X} y={SOURCE_Y + SOURCE_R + 22}
+                  x={SOURCE_X} y={SOURCE_Y + SOURCE_R + 30}
                   textAnchor="middle"
                   className="fill-foreground text-[12px] font-bold"
                   style={{ fontFamily: "'Syne', sans-serif" }}
@@ -559,10 +590,11 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
                   {concept.shortTitle}
                 </text>
                 <text
-                  x={SOURCE_X} y={SOURCE_Y + SOURCE_R + 38}
+                  x={SOURCE_X} y={SOURCE_Y + SOURCE_R + 45}
                   textAnchor="middle"
-                  className="text-[9px] font-mono uppercase tracking-wider"
-                  fill="rgba(255,255,255,0.35)"
+                  className="text-[8px] font-mono uppercase tracking-[0.2em]"
+                  fill={accent}
+                  fillOpacity="0.7"
                 >
                   Source
                 </text>
