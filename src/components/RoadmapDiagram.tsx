@@ -220,6 +220,23 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
               <stop offset="50%" stopColor={accent} stopOpacity="0.9" />
               <stop offset="100%" stopColor={accent} stopOpacity="0" />
             </linearGradient>
+            {/* Glow filter for flowing dots */}
+            <filter id={`glow-${concept.id}`} x="-200%" y="-200%" width="500%" height="500%">
+              <feGaussianBlur stdDeviation="2.5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <filter id={`glow-strong-${concept.id}`} x="-200%" y="-200%" width="500%" height="500%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
 
           {/* Lane headers + faint vertical guides */}
@@ -305,9 +322,10 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
                   {[0, 0.5].map((offset) => (
                     <motion.circle
                       key={`dot-${item.id}-${offset}`}
-                      r={active ? 2.8 : 1.8}
+                      r={active ? 3.2 : 2.2}
                       fill={accent}
-                      fillOpacity={dimmed ? 0.2 : active ? 1 : 0.7}
+                      fillOpacity={dimmed ? 0.2 : active ? 1 : 0.85}
+                      filter={`url(#glow-${active ? "strong-" : ""}${concept.id})`}
                       initial={{ cx: a.x1, cy: a.y1, opacity: 0 }}
                       animate={{
                         cx: [a.x1, a.x2],
@@ -401,9 +419,10 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
                 />
                 {/* Permanent flowing dot on every cross-link */}
                 <motion.circle
-                  r={active ? 2.6 : 1.6}
-                  fill={active ? accent : accentSoft}
-                  fillOpacity={dimmed ? 0.25 : active ? 1 : 0.85}
+                  r={active ? 3 : 2}
+                  fill={accent}
+                  fillOpacity={dimmed ? 0.25 : active ? 1 : 0.9}
+                  filter={`url(#glow-${active ? "strong-" : ""}${concept.id})`}
                   initial={{ cx: a.x1, cy: a.y1, opacity: 0 }}
                   animate={{
                     cx: [a.x1, a.x2],
