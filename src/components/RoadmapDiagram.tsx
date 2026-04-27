@@ -284,74 +284,76 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
             );
           })}
 
-          {/* ── Source → first lane primary arrows ── */}
+          {/* ── Source → first lane primary connections (curved) ── */}
           {phase >= 3 && LANE_ORDER.map((lane) => {
             const items = lanes[lane];
             return items.map((item, i) => {
               if (lane !== "protocol") return null;
               const pos = layout[item.id];
-              const a = arrow(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 4, NODE_R + 6);
-              const active = isLinkActive("__source__", item.id) || activeNode === item.id;
+              const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_W / 2 + 8);
+              const active = activeNode === item.id;
               const dimmed = activeNode !== null && !active;
+              const pathId = `srcpath-${concept.id}-${item.id}`;
               return (
                 <g key={`src-${item.id}`}>
                   {/* Underglow */}
-                  <line
-                    x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
+                  <path
+                    d={c.d}
+                    fill="none"
                     stroke={accent}
-                    strokeWidth={active ? 5 : 3}
-                    strokeOpacity={dimmed ? 0.05 : active ? 0.55 : 0.25}
+                    strokeWidth={active ? 6 : 3.5}
+                    strokeOpacity={dimmed ? 0.04 : active ? 0.55 : 0.22}
                     strokeLinecap="round"
                     filter={`url(#glow-${active ? "strong-" : ""}${concept.id})`}
                     style={{ transition: "stroke-opacity 0.25s, stroke-width 0.25s" }}
                   />
-                  <motion.line
-                    x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
+                  {/* Main dashed flowing path */}
+                  <motion.path
+                    id={pathId}
+                    d={c.d}
+                    fill="none"
                     stroke={active ? accent : accentSoft}
-                    strokeWidth={active ? 1.8 : 1}
-                    strokeOpacity={dimmed ? 0.18 : active ? 1 : 0.65}
-                    strokeDasharray="6 4"
+                    strokeWidth={active ? 1.8 : 1.1}
+                    strokeOpacity={dimmed ? 0.15 : active ? 1 : 0.7}
+                    strokeDasharray="6 5"
                     strokeLinecap="round"
-                    markerEnd={`url(#arrow-${active ? "active-" : ""}${concept.id})`}
                     initial={{ pathLength: 0, opacity: 0 }}
                     animate={{
                       pathLength: 1,
                       opacity: 1,
-                      strokeDashoffset: [0, -20],
+                      strokeDashoffset: [0, -22],
                     }}
                     transition={{
-                      pathLength: { duration: 0.6, delay: 0.05 * i, ease: "easeOut" },
+                      pathLength: { duration: 0.7, delay: 0.05 * i, ease: "easeOut" },
                       opacity: { duration: 0.4, delay: 0.05 * i },
                       strokeDashoffset: {
-                        duration: active ? 0.8 : 1.6,
+                        duration: active ? 0.9 : 1.8,
                         repeat: Infinity,
                         ease: "linear",
                       },
                     }}
                     style={{ transition: "stroke 0.25s, stroke-width 0.25s, stroke-opacity 0.25s" }}
                   />
-                  {/* Permanent flowing dot — multiple staggered for richer motion */}
+                  {/* Glowing dot traveling along the curve */}
                   {[0, 0.5].map((offset) => (
-                    <motion.circle
+                    <circle
                       key={`dot-${item.id}-${offset}`}
-                      r={active ? 3.2 : 2.2}
+                      r={active ? 3.4 : 2.4}
                       fill={accent}
-                      fillOpacity={dimmed ? 0.2 : active ? 1 : 0.85}
+                      fillOpacity={dimmed ? 0.2 : 1}
                       filter={`url(#glow-${active ? "strong-" : ""}${concept.id})`}
-                      initial={{ cx: a.x1, cy: a.y1, opacity: 0 }}
-                      animate={{
-                        cx: [a.x1, a.x2],
-                        cy: [a.y1, a.y2],
-                        opacity: [0, 1, 1, 0],
-                      }}
-                      transition={{
-                        duration: active ? 1.4 : 2.4,
-                        repeat: Infinity,
-                        ease: "linear",
-                        delay: 0.05 * i + offset * (active ? 1.4 : 2.4),
-                        times: [0, 0.1, 0.9, 1],
-                      }}
-                    />
+                    >
+                      <animateMotion
+                        dur={`${active ? 1.6 : 2.8}s`}
+                        repeatCount="indefinite"
+                        begin={`${offset * (active ? 1.6 : 2.8)}s`}
+                        keyPoints="0;1"
+                        keyTimes="0;1"
+                        calcMode="linear"
+                      >
+                        <mpath href={`#${pathId}`} />
+                      </animateMotion>
+                    </circle>
                   ))}
                 </g>
               );
@@ -361,18 +363,24 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
           {/* If no protocols, draw source → services directly */}
           {phase >= 3 && lanes.protocol.length === 0 && lanes.service.map((item, i) => {
             const pos = layout[item.id];
-            const a = arrow(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 4, NODE_R + 6);
+            const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_W / 2 + 8);
             return (
-              <motion.line
+              <motion.path
                 key={`srcs-${item.id}`}
-                x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
+                d={c.d}
+                fill="none"
                 stroke={accentSoft}
-                strokeWidth="1"
-                strokeOpacity="0.5"
-                markerEnd={`url(#arrow-${concept.id})`}
+                strokeWidth="1.2"
+                strokeOpacity="0.6"
+                strokeDasharray="6 5"
+                strokeLinecap="round"
                 initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.05 * i }}
+                animate={{ pathLength: 1, opacity: 1, strokeDashoffset: [0, -22] }}
+                transition={{
+                  pathLength: { duration: 0.7, delay: 0.05 * i },
+                  opacity: { duration: 0.4, delay: 0.05 * i },
+                  strokeDashoffset: { duration: 1.8, repeat: Infinity, ease: "linear" },
+                }}
               />
             );
           })}
@@ -380,49 +388,58 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
           {/* If no services & no protocols, source → practices */}
           {phase >= 3 && lanes.protocol.length === 0 && lanes.service.length === 0 && lanes.practice.map((item, i) => {
             const pos = layout[item.id];
-            const a = arrow(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 4, NODE_R + 6);
+            const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_W / 2 + 8);
             return (
-              <motion.line
+              <motion.path
                 key={`srcp-${item.id}`}
-                x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
+                d={c.d}
+                fill="none"
                 stroke={accentSoft}
-                strokeWidth="1"
-                markerEnd={`url(#arrow-${concept.id})`}
+                strokeWidth="1.2"
+                strokeDasharray="6 5"
+                strokeLinecap="round"
                 initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.05 * i }}
+                animate={{ pathLength: 1, opacity: 1, strokeDashoffset: [0, -22] }}
+                transition={{
+                  pathLength: { duration: 0.7, delay: 0.05 * i },
+                  opacity: { duration: 0.4, delay: 0.05 * i },
+                  strokeDashoffset: { duration: 1.8, repeat: Infinity, ease: "linear" },
+                }}
               />
             );
           })}
 
-          {/* ── Cross-lane arrows (service ↔ service relationships) ── */}
+          {/* ── Cross-lane curved connections ── */}
           {phase >= 4 && crossLinks.map((link, i) => {
             const from = layout[link.from];
             const to = layout[link.to];
             if (!from || !to) return null;
             const active = isLinkActive(link.from, link.to);
             const dimmed = activeNode !== null && !active;
-            const a = arrow(from.x, from.y, to.x, to.y, NODE_R + 4, NODE_R + 8);
+            const c = curve(from.x, from.y, to.x, to.y, NODE_W / 2 + 4, NODE_W / 2 + 8);
+            const pathId = `xpath-${concept.id}-${i}`;
             return (
               <g key={`xl-${i}`}>
                 {/* Underglow */}
-                <line
-                  x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
+                <path
+                  d={c.d}
+                  fill="none"
                   stroke={accent}
-                  strokeWidth={active ? 4.5 : 2.5}
-                  strokeOpacity={dimmed ? 0.04 : active ? 0.5 : 0.18}
+                  strokeWidth={active ? 5 : 2.5}
+                  strokeOpacity={dimmed ? 0.03 : active ? 0.5 : 0.15}
                   strokeLinecap="round"
                   filter={`url(#glow-${active ? "strong-" : ""}${concept.id})`}
                   style={{ transition: "stroke-opacity 0.25s, stroke-width 0.25s" }}
                 />
-                <motion.line
-                  x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
+                <motion.path
+                  id={pathId}
+                  d={c.d}
+                  fill="none"
                   stroke={active ? accent : accentSoft}
                   strokeWidth={active ? 1.6 : 0.9}
                   strokeDasharray="4 5"
                   strokeLinecap="round"
-                  strokeOpacity={dimmed ? 0.15 : active ? 1 : 0.75}
-                  markerEnd={`url(#arrow-${active ? "active-" : "dim-"}${concept.id})`}
+                  strokeOpacity={dimmed ? 0.12 : active ? 1 : 0.7}
                   initial={{ pathLength: 0, opacity: 0 }}
                   animate={{
                     pathLength: 1,
@@ -433,33 +450,31 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
                     pathLength: { duration: 0.5, delay: 0.03 * i },
                     opacity: { duration: 0.4, delay: 0.03 * i },
                     strokeDashoffset: {
-                      duration: active ? 0.9 : 2,
+                      duration: active ? 1.0 : 2.2,
                       repeat: Infinity,
                       ease: "linear",
                     },
                   }}
                   style={{ transition: "stroke 0.25s, stroke-width 0.25s, stroke-opacity 0.25s" }}
                 />
-                {/* Permanent flowing dot on every cross-link */}
-                <motion.circle
+                {/* Glowing dot along curve */}
+                <circle
                   r={active ? 3 : 2}
                   fill={accent}
-                  fillOpacity={dimmed ? 0.25 : active ? 1 : 0.9}
+                  fillOpacity={dimmed ? 0.2 : 1}
                   filter={`url(#glow-${active ? "strong-" : ""}${concept.id})`}
-                  initial={{ cx: a.x1, cy: a.y1, opacity: 0 }}
-                  animate={{
-                    cx: [a.x1, a.x2],
-                    cy: [a.y1, a.y2],
-                    opacity: [0, 1, 1, 0],
-                  }}
-                  transition={{
-                    duration: active ? 1.3 : 2.6,
-                    repeat: Infinity,
-                    ease: "linear",
-                    delay: 0.15 * (i % 5),
-                    times: [0, 0.12, 0.88, 1],
-                  }}
-                />
+                >
+                  <animateMotion
+                    dur={`${active ? 1.5 : 3}s`}
+                    repeatCount="indefinite"
+                    begin={`${0.2 * (i % 5)}s`}
+                    keyPoints="0;1"
+                    keyTimes="0;1"
+                    calcMode="linear"
+                  >
+                    <mpath href={`#${pathId}`} />
+                  </animateMotion>
+                </circle>
               </g>
             );
           })}
