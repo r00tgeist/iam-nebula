@@ -544,37 +544,57 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
               return (
                 <motion.g
                   key={node.id}
-                  initial={{ scale: 0, opacity: 0 }}
+                  initial={{ scale: 0.6, opacity: 0, y: 6 }}
                   animate={{
                     scale: 1,
-                    opacity: isDimmed ? 0.35 : 1,
+                    opacity: isDimmed ? 0.3 : 1,
+                    y: 0,
                   }}
-                  transition={{ ...spring, delay: 0.05 * (laneIdx + i * 0.1) }}
+                  transition={{ ...spring, delay: 0.04 * (laneIdx * 2 + i) }}
                   style={{ transformOrigin: `${pos.x}px ${pos.y}px` }}
                   onMouseEnter={() => setActiveNode(node.id)}
                   onMouseLeave={() => setActiveNode(null)}
                   className="cursor-pointer"
                 >
-                  {/* Hover halo */}
-                  <motion.circle
-                    cx={pos.x} cy={pos.y}
-                    r={NODE_R + 8}
-                    fill={accentDim}
-                    initial={false}
-                    animate={{ opacity: isActive ? 1 : 0, r: isActive ? NODE_R + 10 : NODE_R + 4 }}
-                    transition={{ duration: 0.2 }}
-                  />
-                  {/* Card-style background */}
+                  {/* Outer glow when active */}
+                  {(isActive || isLinked) && (
+                    <rect
+                      x={pos.x - NODE_W / 2 - 4} y={pos.y - NODE_H / 2 - 4}
+                      width={NODE_W + 8} height={NODE_H + 8}
+                      rx={NODE_RX + 4}
+                      fill={accent}
+                      fillOpacity={isActive ? 0.18 : 0.08}
+                      filter={`url(#glow-${isActive ? "strong-" : ""}${concept.id})`}
+                    />
+                  )}
+                  {/* Pill background with gradient depth */}
                   <rect
-                    x={pos.x - NODE_R} y={pos.y - NODE_R}
-                    width={NODE_R * 2} height={NODE_R * 2}
-                    rx={NODE_R}
-                    fill="hsl(var(--card))"
-                    stroke={isActive || isLinked ? accent : "rgba(255,255,255,0.08)"}
-                    strokeWidth={isActive ? 1.6 : isLinked ? 1.2 : 1}
+                    x={pos.x - NODE_W / 2} y={pos.y - NODE_H / 2}
+                    width={NODE_W} height={NODE_H}
+                    rx={NODE_RX}
+                    fill={`url(#node-bg-${concept.id})`}
+                    stroke={isActive ? accent : isLinked ? accentSoft : "rgba(255,255,255,0.09)"}
+                    strokeWidth={isActive ? 1.5 : 1}
                     style={{ transition: "stroke 0.2s, stroke-width 0.2s" }}
                   />
-                  <foreignObject x={pos.x - 12} y={pos.y - 12} width={24} height={24}>
+                  {/* Top highlight line */}
+                  <line
+                    x1={pos.x - NODE_W / 2 + 14} y1={pos.y - NODE_H / 2 + 0.5}
+                    x2={pos.x + NODE_W / 2 - 14} y2={pos.y - NODE_H / 2 + 0.5}
+                    stroke="rgba(255,255,255,0.06)"
+                    strokeWidth="1"
+                  />
+                  {/* Icon chip on left */}
+                  <rect
+                    x={pos.x - NODE_W / 2 + 6} y={pos.y - 14}
+                    width={28} height={28}
+                    rx={8}
+                    fill={isActive || isLinked ? accentDim : "rgba(255,255,255,0.04)"}
+                    stroke={isActive || isLinked ? accentSoft : "rgba(255,255,255,0.06)"}
+                    strokeWidth="1"
+                    style={{ transition: "all 0.2s" }}
+                  />
+                  <foreignObject x={pos.x - NODE_W / 2 + 10} y={pos.y - 10} width={20} height={20}>
                     <div
                       className={`flex h-full w-full items-center justify-center transition-colors duration-200 ${
                         isActive || isLinked
@@ -585,18 +605,18 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
                       <LucideIcon name={node.icon} size={14} />
                     </div>
                   </foreignObject>
-                  {/* Label below */}
+                  {/* Label inside pill */}
                   <text
-                    x={pos.x} y={pos.y + NODE_R + 14}
-                    textAnchor="middle"
-                    className="text-[10px] transition-colors"
-                    fill={isActive ? "hsl(var(--foreground))" : isLinked ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))"}
+                    x={pos.x - NODE_W / 2 + 42} y={pos.y + 4}
+                    className="text-[11px] transition-colors"
+                    fill={isActive ? "hsl(var(--foreground))" : isLinked ? "hsl(var(--foreground))" : "rgba(255,255,255,0.65)"}
                     style={{
                       fontFamily: "'IBM Plex Sans', sans-serif",
-                      fontWeight: isActive ? 600 : 400,
+                      fontWeight: isActive ? 600 : 500,
+                      letterSpacing: "0.01em",
                     }}
                   >
-                    {node.label}
+                    {node.label.length > 18 ? node.label.slice(0, 17) + "…" : node.label}
                   </text>
                 </motion.g>
               );
