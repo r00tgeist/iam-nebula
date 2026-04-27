@@ -294,12 +294,23 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
               const dimmed = activeNode !== null && !active;
               return (
                 <g key={`src-${item.id}`}>
+                  {/* Underglow */}
+                  <line
+                    x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
+                    stroke={accent}
+                    strokeWidth={active ? 5 : 3}
+                    strokeOpacity={dimmed ? 0.05 : active ? 0.55 : 0.25}
+                    strokeLinecap="round"
+                    filter={`url(#glow-${active ? "strong-" : ""}${concept.id})`}
+                    style={{ transition: "stroke-opacity 0.25s, stroke-width 0.25s" }}
+                  />
                   <motion.line
                     x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
                     stroke={active ? accent : accentSoft}
                     strokeWidth={active ? 1.8 : 1}
-                    strokeOpacity={dimmed ? 0.18 : active ? 1 : 0.55}
+                    strokeOpacity={dimmed ? 0.18 : active ? 1 : 0.65}
                     strokeDasharray="6 4"
+                    strokeLinecap="round"
                     markerEnd={`url(#arrow-${active ? "active-" : ""}${concept.id})`}
                     initial={{ pathLength: 0, opacity: 0 }}
                     animate={{
