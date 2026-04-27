@@ -220,6 +220,23 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
               <stop offset="50%" stopColor={accent} stopOpacity="0.9" />
               <stop offset="100%" stopColor={accent} stopOpacity="0" />
             </linearGradient>
+            {/* Glow filter for flowing dots */}
+            <filter id={`glow-${concept.id}`} x="-200%" y="-200%" width="500%" height="500%">
+              <feGaussianBlur stdDeviation="2.5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <filter id={`glow-strong-${concept.id}`} x="-200%" y="-200%" width="500%" height="500%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
 
           {/* Lane headers + faint vertical guides */}
