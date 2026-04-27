@@ -263,39 +263,57 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
             const x = LANE_X[idx];
             const meta = LANE_META[lane];
             const highlighted = isLaneHighlighted(lane);
+            const count = lanes[lane].length;
+            if (count === 0) return null;
             return (
               <motion.g
                 key={`lane-${lane}`}
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: phase >= 2 ? 1 : 0, y: phase >= 2 ? 0 : -6 }}
-                transition={{ duration: 0.4, delay: 0.05 * idx }}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: phase >= 2 ? 1 : 0, y: phase >= 2 ? 0 : -8 }}
+                transition={{ duration: 0.5, delay: 0.07 * idx }}
               >
                 {/* Vertical guide */}
                 <line
-                  x1={x} y1={LANE_HEADER_Y + 20}
-                  x2={x} y2={H - 20}
-                  stroke={highlighted ? accentSoft : "rgba(255,255,255,0.05)"}
+                  x1={x} y1={LANE_HEADER_Y + 24}
+                  x2={x} y2={H - 25}
+                  stroke={highlighted ? accentSoft : "rgba(255,255,255,0.04)"}
                   strokeWidth="1"
-                  strokeDasharray="2 6"
+                  strokeDasharray="2 8"
                   style={{ transition: "stroke 0.3s" }}
                 />
                 {/* Header pill */}
                 <g transform={`translate(${x}, ${LANE_HEADER_Y})`}>
                   <rect
-                    x={-72} y={-16} width={144} height={28} rx={14}
-                    fill={highlighted ? accentDim : "rgba(255,255,255,0.03)"}
-                    stroke={highlighted ? accentSoft : "rgba(255,255,255,0.06)"}
+                    x={-95} y={-18} width={190} height={36} rx={18}
+                    fill={highlighted ? accentDim : "rgba(255,255,255,0.025)"}
+                    stroke={highlighted ? accent : "rgba(255,255,255,0.08)"}
                     strokeWidth="1"
                     style={{ transition: "all 0.3s" }}
                   />
+                  {/* Icon dot */}
+                  <circle
+                    cx={-72} cy={0} r={4}
+                    fill={accent}
+                    fillOpacity={highlighted ? 1 : 0.5}
+                    style={{ transition: "fill-opacity 0.3s" }}
+                  />
                   <text
-                    x={0} y={4}
-                    textAnchor="middle"
-                    className="text-[10px] font-mono uppercase tracking-wider"
-                    fill={highlighted ? accent : "rgba(255,255,255,0.5)"}
+                    x={-58} y={4}
+                    className="text-[10px] font-mono uppercase tracking-[0.15em]"
+                    fill={highlighted ? accent : "rgba(255,255,255,0.6)"}
                     style={{ transition: "fill 0.3s" }}
                   >
                     {meta.short}
+                  </text>
+                  {/* Count badge */}
+                  <text
+                    x={82} y={4}
+                    textAnchor="end"
+                    className="text-[9px] font-mono"
+                    fill={highlighted ? accent : "rgba(255,255,255,0.35)"}
+                    style={{ transition: "fill 0.3s" }}
+                  >
+                    {String(count).padStart(2, "0")}
                   </text>
                 </g>
               </motion.g>
