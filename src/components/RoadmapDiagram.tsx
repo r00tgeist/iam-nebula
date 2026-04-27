@@ -419,9 +419,10 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
                 />
                 {/* Permanent flowing dot on every cross-link */}
                 <motion.circle
-                  r={active ? 2.6 : 1.6}
-                  fill={active ? accent : accentSoft}
-                  fillOpacity={dimmed ? 0.25 : active ? 1 : 0.85}
+                  r={active ? 3 : 2}
+                  fill={accent}
+                  fillOpacity={dimmed ? 0.25 : active ? 1 : 0.9}
+                  filter={`url(#glow-${active ? "strong-" : ""}${concept.id})`}
                   initial={{ cx: a.x1, cy: a.y1, opacity: 0 }}
                   animate={{
                     cx: [a.x1, a.x2],
