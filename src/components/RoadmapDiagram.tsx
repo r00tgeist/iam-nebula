@@ -1,325 +1,593 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Concept } from "@/data/concepts";
-import { ConceptConnections } from "@/data/connections";
+import { ConceptConnections, ConnectionNode } from "@/data/connections";
 import LucideIcon from "@/components/LucideIcon";
 
-const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
+const spring = { type: "spring" as const, stiffness: 260, damping: 26 };
 
 interface Props {
   concept: Concept;
   connections: ConceptConnections;
 }
 
+// Heuristic: classify a node as a Protocol/Standard, a Service/Tool, or a Practice/Control
+const classify = (node: ConnectionNode): "protocol" | "service" | "practice" => {
+  const protocolIcons = new Set([
+    "FileJson", "Globe", "Code", "Hash", "Award", "Tag", "ExternalLink",
+  ]);
+  const serviceIcons = new Set([
+    "Cloud", "Server", "Database", "Cpu", "Monitor", "Smartphone", "Usb",
+    "Network", "Bell", "MessageSquare", "Video",
+  ]);
+  if (protocolIcons.has(node.icon)) return "protocol";
+  if (serviceIcons.has(node.icon)) return "service";
+  return "practice";
+};
+
+const LANE_META = {
+  protocol: { label: "Protocols & Standards", short: "Protocols", icon: "FileJson" },
+  service:  { label: "Services & Infrastructure", short: "Services", icon: "Server" },
+  practice: { label: "Controls & Practices",      short: "Controls", icon: "ShieldCheck" },
+} as const;
+
+const LANE_ORDER: Array<keyof typeof LANE_META> = ["protocol", "service", "practice"];
+
 const RoadmapDiagram = ({ concept, connections }: Props) => {
   const [activeNode, setActiveNode] = useState<string | null>(null);
-  const [visibleCount, setVisibleCount] = useState(0);
-  const [showCenter, setShowCenter] = useState(false);
+  const [activeLane, setActiveLane] = useState<keyof typeof LANE_META | null>(null);
+  const [phase, setPhase] = useState(0); // 0 nothing, 1 source, 2 lanes, 3 nodes, 4 cross-links
 
   const isCyan = concept.category === "basic";
-  const nodes = connections.nodes;
-  const count = nodes.length;
+  const accent = isCyan ? "hsl(187,100%,50%)" : "hsl(263,87%,66%)";
+  const accentDim = isCyan ? "rgba(0,229,255,0.12)" : "rgba(139,92,246,0.12)";
+  const accentSoft = isCyan ? "rgba(0,229,255,0.4)" : "rgba(139,92,246,0.4)";
+
+  // Group nodes into lanes
+  const lanes = useMemo(() => {
+    const buckets: Record<string, ConnectionNode[]> = { protocol: [], service: [], practice: [] };
+    connections.nodes.forEach((n) => buckets[classify(n)].push(n));
+    return buckets as Record<keyof typeof LANE_META, ConnectionNode[]>;
+  }, [connections]);
+
+  // Pre-computed cross-links between lanes (visual storytelling: protocol→service, service→practice)
+  const crossLinks = useMemo(() => {
+    const links: Array<{ from: string; to: string }> = [];
+    const protos = lanes.protocol;
+    const svcs = lanes.service;
+    const prax = lanes.practice;
+    // Each protocol connects to first 1-2 services (mod indexed)
+    protos.forEach((p, i) => {
+      if (svcs.length > 0) links.push({ from: p.id, to: svcs[i % svcs.length].id });
+    });
+    // Each service connects to a practice
+    svcs.forEach((s, i) => {
+      if (prax.length > 0) links.push({ from: s.id, to: prax[i % prax.length].id });
+    });
+    // If no services, hop protocol→practice
+    if (svcs.length === 0 && protos.length && prax.length) {
+      protos.forEach((p, i) => links.push({ from: p.id, to: prax[i % prax.length].id }));
+    }
+    return links;
+  }, [lanes]);
 
   useEffect(() => {
-    setShowCenter(false);
-    setVisibleCount(0);
-    const t1 = setTimeout(() => setShowCenter(true), 150);
-    const timers = nodes.map((_, i) =>
-      setTimeout(() => setVisibleCount(i + 1), 500 + i * 150)
-    );
-    return () => {
-      clearTimeout(t1);
-      timers.forEach(clearTimeout);
-    };
-  }, [concept.id, nodes]);
+    setPhase(0);
+    setActiveNode(null);
+    setActiveLane(null);
+    const t1 = setTimeout(() => setPhase(1), 120);
+    const t2 = setTimeout(() => setPhase(2), 450);
+    const t3 = setTimeout(() => setPhase(3), 800);
+    const t4 = setTimeout(() => setPhase(4), 1500);
+    return () => [t1, t2, t3, t4].forEach(clearTimeout);
+  }, [concept.id]);
 
-  // Compute positions on a circle — responsive via viewBox
-  const SIZE = 700;
-  const CX = SIZE / 2;
-  const CY = SIZE / 2;
-  const RADIUS = 260;
-  const CENTER_R = 44;
-  const NODE_R = 28;
+  // Layout (SVG)
+  const W = 900;
+  const H = 540;
+  const SOURCE_X = 90;
+  const SOURCE_Y = H / 2;
+  const SOURCE_R = 38;
+  const LANE_X = [320, 560, 800];
+  const NODE_R = 22;
+  const LANE_HEADER_Y = 50;
 
-  const positions = useMemo(() => {
-    return nodes.map((_, i) => {
-      const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
-      return {
-        x: Math.cos(angle) * RADIUS + CX,
-        y: Math.sin(angle) * RADIUS + CY,
-      };
+  // Position nodes vertically within each lane column
+  const layout = useMemo(() => {
+    const map: Record<string, { x: number; y: number; lane: keyof typeof LANE_META }> = {};
+    LANE_ORDER.forEach((lane, laneIdx) => {
+      const items = lanes[lane];
+      const x = LANE_X[laneIdx];
+      const n = items.length;
+      const usableTop = 110;
+      const usableBottom = H - 40;
+      const span = usableBottom - usableTop;
+      items.forEach((item, i) => {
+        const y = n === 1 ? (usableTop + usableBottom) / 2 : usableTop + (span * i) / (n - 1);
+        map[item.id] = { x, y, lane };
+      });
     });
-  }, [count, nodes]);
+    return map;
+  }, [lanes]);
 
-  const accentColor = isCyan ? "hsl(187,100%,50%)" : "hsl(263,87%,66%)";
-  const accentColorDim = isCyan ? "rgba(0,229,255,0.12)" : "rgba(139,92,246,0.12)";
-  const accentGlow = isCyan ? "rgba(0,229,255,0.25)" : "rgba(139,92,246,0.25)";
+  // Helper: shorten arrow at endpoints
+  const arrow = (x1: number, y1: number, x2: number, y2: number, padStart = 0, padEnd = NODE_R + 8) => {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const d = Math.sqrt(dx * dx + dy * dy) || 1;
+    const ux = dx / d;
+    const uy = dy / d;
+    return {
+      x1: x1 + ux * padStart,
+      y1: y1 + uy * padStart,
+      x2: x2 - ux * padEnd,
+      y2: y2 - uy * padEnd,
+    };
+  };
+
+  const isLaneHighlighted = (lane: keyof typeof LANE_META) => {
+    if (activeNode) return layout[activeNode]?.lane === lane;
+    return activeLane === lane;
+  };
+
+  // Determine which nodes / links are highlighted
+  const highlightedNodes = useMemo(() => {
+    const set = new Set<string>();
+    if (activeNode) {
+      set.add(activeNode);
+      crossLinks.forEach((l) => {
+        if (l.from === activeNode) set.add(l.to);
+        if (l.to === activeNode) set.add(l.from);
+      });
+    }
+    return set;
+  }, [activeNode, crossLinks]);
+
+  const isLinkActive = (from: string, to: string) =>
+    !!activeNode && (from === activeNode || to === activeNode);
 
   return (
     <div className="glass-card overflow-hidden p-6">
-      <h2 className="font-display text-lg font-bold text-foreground mb-2">
-        Connected Concepts & Services
-      </h2>
-      <p className="text-sm text-muted-foreground mb-6">
-        Hover over any node to highlight its connection to{" "}
-        <span className={isCyan ? "text-primary" : "text-secondary"}>{concept.shortTitle}</span>.
-      </p>
+      <div className="flex items-start justify-between gap-4 mb-2 flex-wrap">
+        <div>
+          <h2 className="font-display text-lg font-bold text-foreground">
+            Connected Concepts & Services
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            How <span className={isCyan ? "text-primary" : "text-secondary"}>{concept.shortTitle}</span> flows through{" "}
+            <span className="text-foreground/80">protocols</span>,{" "}
+            <span className="text-foreground/80">services</span>, and{" "}
+            <span className="text-foreground/80">controls</span>.
+          </p>
+        </div>
+        {/* Legend */}
+        <div className="hidden sm:flex items-center gap-4 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          {LANE_ORDER.map((lane) => (
+            <button
+              key={lane}
+              onMouseEnter={() => setActiveLane(lane)}
+              onMouseLeave={() => setActiveLane(null)}
+              className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+            >
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ background: accent, opacity: isLaneHighlighted(lane) ? 1 : 0.4 }}
+              />
+              {LANE_META[lane].short}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      {/* ── Desktop: SVG diagram ── */}
-      <div className="hidden md:flex justify-center">
-        <div className="w-full" style={{ maxWidth: 700 }}>
-          <svg
-            viewBox={`0 0 ${SIZE} ${SIZE}`}
-            className="w-full h-auto"
-          >
-            <defs>
-              {/* Glow filter for active lines */}
-              <filter id="line-glow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="3" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-              {/* Gradient for center node */}
-              <radialGradient id="center-grad" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={accentColor} stopOpacity="0.3" />
-                <stop offset="100%" stopColor={accentColor} stopOpacity="0.05" />
-              </radialGradient>
-              {/* Animated dash pattern */}
-              <pattern id="dash-pattern" patternUnits="userSpaceOnUse" width="12" height="1">
-                <line x1="0" y1="0.5" x2="6" y2="0.5" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-              </pattern>
-            </defs>
+      {/* ── Desktop: layered graph ── */}
+      <div className="hidden md:block">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto">
+          <defs>
+            {/* Arrow marker */}
+            <marker
+              id={`arrow-${concept.id}`}
+              viewBox="0 0 10 10"
+              refX="8" refY="5"
+              markerWidth="6" markerHeight="6"
+              orient="auto-start-reverse"
+            >
+              <path d="M0,0 L10,5 L0,10 z" fill={accent} fillOpacity="0.65" />
+            </marker>
+            <marker
+              id={`arrow-active-${concept.id}`}
+              viewBox="0 0 10 10"
+              refX="8" refY="5"
+              markerWidth="7" markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M0,0 L10,5 L0,10 z" fill={accent} />
+            </marker>
+            <marker
+              id={`arrow-dim-${concept.id}`}
+              viewBox="0 0 10 10"
+              refX="8" refY="5"
+              markerWidth="5" markerHeight="5"
+              orient="auto-start-reverse"
+            >
+              <path d="M0,0 L10,5 L0,10 z" fill="rgba(255,255,255,0.18)" />
+            </marker>
+            <radialGradient id={`src-grad-${concept.id}`} cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={accent} stopOpacity="0.35" />
+              <stop offset="100%" stopColor={accent} stopOpacity="0" />
+            </radialGradient>
+            <linearGradient id={`flow-${concept.id}`} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor={accent} stopOpacity="0" />
+              <stop offset="50%" stopColor={accent} stopOpacity="0.9" />
+              <stop offset="100%" stopColor={accent} stopOpacity="0" />
+            </linearGradient>
+          </defs>
 
-            {/* ── Connection lines ── */}
-            {nodes.map((node, i) => {
-              if (i >= visibleCount) return null;
-              const pos = positions[i];
-              const isNodeActive = activeNode === node.id;
-
-              // Shorten line so it doesn't overlap icons
-              const dx = pos.x - CX;
-              const dy = pos.y - CY;
-              const dist = Math.sqrt(dx * dx + dy * dy);
-              const ux = dx / dist;
-              const uy = dy / dist;
-              const x1 = CX + ux * (CENTER_R + 6);
-              const y1 = CY + uy * (CENTER_R + 6);
-              const x2 = pos.x - ux * (NODE_R + 6);
-              const y2 = pos.y - uy * (NODE_R + 6);
-
-              return (
-                <g key={`line-${node.id}`}>
-                  {/* Background dashed line */}
-                  <motion.line
-                    x1={x1} y1={y1} x2={x2} y2={y2}
-                    stroke="rgba(255,255,255,0.06)"
-                    strokeWidth="1"
-                    strokeDasharray="6 6"
-                    initial={{ pathLength: 0, opacity: 0 }}
-                    animate={{ pathLength: 1, opacity: 1 }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                  />
-                  {/* Active highlight line */}
-                  <motion.line
-                    x1={x1} y1={y1} x2={x2} y2={y2}
-                    stroke={accentColor}
-                    strokeWidth={isNodeActive ? 2 : 0}
-                    initial={false}
-                    animate={{
-                      strokeWidth: isNodeActive ? 2 : 0,
-                      opacity: isNodeActive ? 1 : 0,
-                    }}
-                    transition={{ duration: 0.25 }}
-                    filter={isNodeActive ? "url(#line-glow)" : undefined}
-                  />
-                  {/* Flowing dot on active */}
-                  {isNodeActive && (
-                    <motion.circle
-                      r="2.5"
-                      fill={accentColor}
-                      initial={{ offsetDistance: "0%" }}
-                      animate={{ cx: [x1, x2], cy: [y1, y2] }}
-                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                    />
-                  )}
-                </g>
-              );
-            })}
-
-            {/* ── Center node ── */}
-            <AnimatePresence>
-              {showCenter && (
-                <motion.g
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={spring}
-                  style={{ transformOrigin: `${CX}px ${CY}px` }}
-                >
-                  {/* Outer glow ring */}
-                  <circle cx={CX} cy={CY} r={CENTER_R + 18} fill="url(#center-grad)" />
-                  {/* Pulse ring */}
-                  <motion.circle
-                    cx={CX} cy={CY} r={CENTER_R + 4}
-                    fill="none"
-                    stroke={accentColor}
-                    strokeWidth="1"
-                    strokeOpacity="0.2"
-                    initial={{ r: CENTER_R + 4, opacity: 0.3 }}
-                    animate={{ r: CENTER_R + 24, opacity: 0 }}
-                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeOut" }}
-                  />
-                  {/* Main circle */}
-                  <circle
-                    cx={CX} cy={CY} r={CENTER_R}
-                    fill={isCyan ? "rgba(0,229,255,0.15)" : "rgba(139,92,246,0.15)"}
-                    stroke={accentColor}
-                    strokeWidth="1.5"
-                    strokeOpacity="0.5"
-                  />
-                </motion.g>
-              )}
-            </AnimatePresence>
-
-            {/* Center icon + label (foreignObject for Lucide) */}
-            {showCenter && (
-              <foreignObject x={CX - 40} y={CY - 40} width={80} height={80}>
-                <div className="flex h-full w-full items-center justify-center">
-                  <div className={isCyan ? "text-primary" : "text-secondary"}>
-                    <LucideIcon name={concept.icon} size={30} />
-                  </div>
-                </div>
-              </foreignObject>
-            )}
-            {showCenter && (
-              <text
-                x={CX} y={CY + CENTER_R + 20}
-                textAnchor="middle"
-                className="fill-foreground text-[13px] font-bold"
-                style={{ fontFamily: "'Syne', sans-serif" }}
+          {/* Lane headers + faint vertical guides */}
+          {LANE_ORDER.map((lane, idx) => {
+            const x = LANE_X[idx];
+            const meta = LANE_META[lane];
+            const highlighted = isLaneHighlighted(lane);
+            return (
+              <motion.g
+                key={`lane-${lane}`}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: phase >= 2 ? 1 : 0, y: phase >= 2 ? 0 : -6 }}
+                transition={{ duration: 0.4, delay: 0.05 * idx }}
               >
-                {concept.shortTitle}
-              </text>
+                {/* Vertical guide */}
+                <line
+                  x1={x} y1={LANE_HEADER_Y + 20}
+                  x2={x} y2={H - 20}
+                  stroke={highlighted ? accentSoft : "rgba(255,255,255,0.05)"}
+                  strokeWidth="1"
+                  strokeDasharray="2 6"
+                  style={{ transition: "stroke 0.3s" }}
+                />
+                {/* Header pill */}
+                <g transform={`translate(${x}, ${LANE_HEADER_Y})`}>
+                  <rect
+                    x={-72} y={-16} width={144} height={28} rx={14}
+                    fill={highlighted ? accentDim : "rgba(255,255,255,0.03)"}
+                    stroke={highlighted ? accentSoft : "rgba(255,255,255,0.06)"}
+                    strokeWidth="1"
+                    style={{ transition: "all 0.3s" }}
+                  />
+                  <text
+                    x={0} y={4}
+                    textAnchor="middle"
+                    className="text-[10px] font-mono uppercase tracking-wider"
+                    fill={highlighted ? accent : "rgba(255,255,255,0.5)"}
+                    style={{ transition: "fill 0.3s" }}
+                  >
+                    {meta.short}
+                  </text>
+                </g>
+              </motion.g>
+            );
+          })}
+
+          {/* ── Source → first lane primary arrows ── */}
+          {phase >= 3 && LANE_ORDER.map((lane) => {
+            const items = lanes[lane];
+            return items.map((item, i) => {
+              // Only draw source→protocol arrows (first lane); others get cross-links
+              if (lane !== "protocol") return null;
+              const pos = layout[item.id];
+              const a = arrow(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 4, NODE_R + 6);
+              const active = isLinkActive("__source__", item.id) || activeNode === item.id;
+              return (
+                <motion.line
+                  key={`src-${item.id}`}
+                  x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
+                  stroke={active ? accent : accentSoft}
+                  strokeWidth={active ? 1.8 : 1}
+                  strokeOpacity={active ? 1 : 0.5}
+                  markerEnd={`url(#arrow-${active ? "active-" : ""}${concept.id})`}
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: 0.6, delay: 0.05 * i, ease: "easeOut" }}
+                  style={{ transition: "stroke 0.2s, stroke-width 0.2s" }}
+                />
+              );
+            });
+          })}
+
+          {/* If no protocols, draw source → services directly */}
+          {phase >= 3 && lanes.protocol.length === 0 && lanes.service.map((item, i) => {
+            const pos = layout[item.id];
+            const a = arrow(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 4, NODE_R + 6);
+            return (
+              <motion.line
+                key={`srcs-${item.id}`}
+                x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
+                stroke={accentSoft}
+                strokeWidth="1"
+                strokeOpacity="0.5"
+                markerEnd={`url(#arrow-${concept.id})`}
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.05 * i }}
+              />
+            );
+          })}
+
+          {/* If no services & no protocols, source → practices */}
+          {phase >= 3 && lanes.protocol.length === 0 && lanes.service.length === 0 && lanes.practice.map((item, i) => {
+            const pos = layout[item.id];
+            const a = arrow(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 4, NODE_R + 6);
+            return (
+              <motion.line
+                key={`srcp-${item.id}`}
+                x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
+                stroke={accentSoft}
+                strokeWidth="1"
+                markerEnd={`url(#arrow-${concept.id})`}
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.05 * i }}
+              />
+            );
+          })}
+
+          {/* ── Cross-lane arrows (service ↔ service relationships) ── */}
+          {phase >= 4 && crossLinks.map((link, i) => {
+            const from = layout[link.from];
+            const to = layout[link.to];
+            if (!from || !to) return null;
+            const active = isLinkActive(link.from, link.to);
+            const a = arrow(from.x, from.y, to.x, to.y, NODE_R + 4, NODE_R + 8);
+            return (
+              <motion.g key={`xl-${i}`}>
+                <motion.line
+                  x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
+                  stroke={active ? accent : "rgba(255,255,255,0.08)"}
+                  strokeWidth={active ? 1.6 : 0.8}
+                  strokeDasharray={active ? "0" : "3 4"}
+                  markerEnd={`url(#arrow-${active ? "active-" : "dim-"}${concept.id})`}
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.03 * i }}
+                  style={{ transition: "stroke 0.2s, stroke-width 0.2s, stroke-dasharray 0.2s" }}
+                />
+                {/* Flowing dot when active */}
+                {active && (
+                  <motion.circle
+                    r="2.5"
+                    fill={accent}
+                    initial={{ cx: a.x1, cy: a.y1 }}
+                    animate={{ cx: [a.x1, a.x2], cy: [a.y1, a.y2] }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                  />
+                )}
+              </motion.g>
+            );
+          })}
+
+          {/* ── Source node (concept) ── */}
+          <AnimatePresence>
+            {phase >= 1 && (
+              <motion.g
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={spring}
+                style={{ transformOrigin: `${SOURCE_X}px ${SOURCE_Y}px` }}
+              >
+                <circle cx={SOURCE_X} cy={SOURCE_Y} r={SOURCE_R + 22} fill={`url(#src-grad-${concept.id})`} />
+                <motion.circle
+                  cx={SOURCE_X} cy={SOURCE_Y}
+                  r={SOURCE_R + 4}
+                  fill="none"
+                  stroke={accent}
+                  strokeOpacity="0.3"
+                  strokeWidth="1"
+                  initial={{ r: SOURCE_R + 4, opacity: 0.3 }}
+                  animate={{ r: SOURCE_R + 22, opacity: 0 }}
+                  transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut" }}
+                />
+                <circle
+                  cx={SOURCE_X} cy={SOURCE_Y} r={SOURCE_R}
+                  fill={isCyan ? "rgba(0,229,255,0.15)" : "rgba(139,92,246,0.15)"}
+                  stroke={accent}
+                  strokeWidth="1.5"
+                  strokeOpacity="0.6"
+                />
+                <foreignObject x={SOURCE_X - 22} y={SOURCE_Y - 22} width={44} height={44}>
+                  <div className="flex h-full w-full items-center justify-center">
+                    <div className={isCyan ? "text-primary" : "text-secondary"}>
+                      <LucideIcon name={concept.icon} size={26} />
+                    </div>
+                  </div>
+                </foreignObject>
+                <text
+                  x={SOURCE_X} y={SOURCE_Y + SOURCE_R + 22}
+                  textAnchor="middle"
+                  className="fill-foreground text-[12px] font-bold"
+                  style={{ fontFamily: "'Syne', sans-serif" }}
+                >
+                  {concept.shortTitle}
+                </text>
+                <text
+                  x={SOURCE_X} y={SOURCE_Y + SOURCE_R + 38}
+                  textAnchor="middle"
+                  className="text-[9px] font-mono uppercase tracking-wider"
+                  fill="rgba(255,255,255,0.35)"
+                >
+                  Source
+                </text>
+              </motion.g>
             )}
+          </AnimatePresence>
 
-            {/* ── Surrounding nodes ── */}
-            {nodes.map((node, i) => {
-              if (i >= visibleCount) return null;
-              const pos = positions[i];
-              const isNodeActive = activeNode === node.id;
-
+          {/* ── Lane nodes ── */}
+          {phase >= 3 && LANE_ORDER.flatMap((lane, laneIdx) =>
+            lanes[lane].map((node, i) => {
+              const pos = layout[node.id];
+              const isActive = activeNode === node.id;
+              const isLinked = highlightedNodes.has(node.id) && !isActive;
+              const isDimmed = activeNode !== null && !isActive && !isLinked;
               return (
                 <motion.g
                   key={node.id}
                   initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ ...spring, delay: 0.05 }}
+                  animate={{
+                    scale: 1,
+                    opacity: isDimmed ? 0.35 : 1,
+                  }}
+                  transition={{ ...spring, delay: 0.05 * (laneIdx + i * 0.1) }}
                   style={{ transformOrigin: `${pos.x}px ${pos.y}px` }}
                   onMouseEnter={() => setActiveNode(node.id)}
                   onMouseLeave={() => setActiveNode(null)}
                   className="cursor-pointer"
                 >
-                  {/* Hover glow */}
+                  {/* Hover halo */}
                   <motion.circle
-                    cx={pos.x} cy={pos.y} r={NODE_R + 8}
-                    fill={accentColorDim}
+                    cx={pos.x} cy={pos.y}
+                    r={NODE_R + 8}
+                    fill={accentDim}
                     initial={false}
-                    animate={{ opacity: isNodeActive ? 1 : 0, r: isNodeActive ? NODE_R + 10 : NODE_R + 4 }}
+                    animate={{ opacity: isActive ? 1 : 0, r: isActive ? NODE_R + 10 : NODE_R + 4 }}
                     transition={{ duration: 0.2 }}
                   />
-                  {/* Circle */}
-                  <motion.circle
-                    cx={pos.x} cy={pos.y} r={NODE_R}
+                  {/* Card-style background */}
+                  <rect
+                    x={pos.x - NODE_R} y={pos.y - NODE_R}
+                    width={NODE_R * 2} height={NODE_R * 2}
+                    rx={NODE_R}
                     fill="hsl(var(--card))"
-                    stroke={isNodeActive ? accentColor : "rgba(255,255,255,0.08)"}
-                    strokeWidth={isNodeActive ? 1.5 : 1}
-                    initial={false}
-                    animate={{
-                      stroke: isNodeActive ? accentColor : "rgba(255,255,255,0.08)",
-                    }}
-                    transition={{ duration: 0.2 }}
+                    stroke={isActive || isLinked ? accent : "rgba(255,255,255,0.08)"}
+                    strokeWidth={isActive ? 1.6 : isLinked ? 1.2 : 1}
+                    style={{ transition: "stroke 0.2s, stroke-width 0.2s" }}
                   />
-                  {/* Icon via foreignObject */}
-                  <foreignObject x={pos.x - 14} y={pos.y - 14} width={28} height={28}>
-                    <div className={`flex h-full w-full items-center justify-center transition-colors duration-200 ${isNodeActive ? (isCyan ? "text-primary" : "text-secondary") : "text-muted-foreground"}`}>
-                      <LucideIcon name={node.icon} size={16} />
+                  <foreignObject x={pos.x - 12} y={pos.y - 12} width={24} height={24}>
+                    <div
+                      className={`flex h-full w-full items-center justify-center transition-colors duration-200 ${
+                        isActive || isLinked
+                          ? isCyan ? "text-primary" : "text-secondary"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      <LucideIcon name={node.icon} size={14} />
                     </div>
                   </foreignObject>
-                  {/* Label */}
+                  {/* Label below */}
                   <text
-                    x={pos.x} y={pos.y + NODE_R + 16}
+                    x={pos.x} y={pos.y + NODE_R + 14}
                     textAnchor="middle"
-                    className={`text-[11px] transition-colors duration-200 ${isNodeActive ? "fill-foreground font-semibold" : "fill-[hsl(var(--muted-foreground))]"}`}
-                    style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}
+                    className="text-[10px] transition-colors"
+                    fill={isActive ? "hsl(var(--foreground))" : isLinked ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))"}
+                    style={{
+                      fontFamily: "'IBM Plex Sans', sans-serif",
+                      fontWeight: isActive ? 600 : 400,
+                    }}
                   >
                     {node.label}
                   </text>
                 </motion.g>
               );
-            })}
-          </svg>
-        </div>
+            })
+          )}
+        </svg>
+
+        {/* Hint */}
+        <p className="text-center text-[10px] font-mono text-muted-foreground/40 mt-2 uppercase tracking-wider">
+          Hover any node to trace its connections
+        </p>
       </div>
 
-      {/* ── Mobile: vertical list ── */}
-      <div className="md:hidden">
-        {/* Center node */}
+      {/* ── Mobile: stacked lanes with arrows ── */}
+      <div className="md:hidden mt-2">
+        {/* Source */}
         <motion.div
-          className="mb-6 flex items-center gap-3"
-          initial={{ scale: 0.8, opacity: 0 }}
+          className="mb-4 flex items-center gap-3"
+          initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={spring}
         >
           <div
-            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
               isCyan
                 ? "bg-gradient-to-br from-primary/80 to-primary/40 text-primary-foreground glow-cyan-strong"
                 : "bg-gradient-to-br from-secondary/80 to-secondary/40 text-secondary-foreground glow-violet"
             }`}
           >
-            <LucideIcon name={concept.icon} size={24} />
+            <LucideIcon name={concept.icon} size={22} />
           </div>
           <div>
             <span className="font-display text-sm font-bold text-foreground">
               {concept.shortTitle}
             </span>
-            <p className="text-[11px] text-muted-foreground">{count} connected concepts</p>
+            <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">
+              Source concept
+            </p>
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-2 gap-2">
-          {nodes.map((node, i) => (
-            <motion.div
-              key={node.id}
-              className={`flex items-center gap-3 rounded-xl border p-3 transition-colors duration-200 ${
-                activeNode === node.id
-                  ? isCyan
-                    ? "border-primary/30 bg-primary/[0.04]"
-                    : "border-secondary/30 bg-secondary/[0.04]"
-                  : "border-[rgba(255,255,255,0.06)] bg-transparent"
-              }`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ ...spring, delay: 0.2 + i * 0.05 }}
-              onTouchStart={() => setActiveNode(node.id)}
-              onTouchEnd={() => setActiveNode(null)}
-            >
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200 ${
-                activeNode === node.id
-                  ? isCyan
-                    ? "border-primary/30 text-primary bg-primary/10"
-                    : "border-secondary/30 text-secondary bg-secondary/10"
-                  : "border-[rgba(255,255,255,0.06)] text-muted-foreground bg-card/40"
-              }`}>
-                <LucideIcon name={node.icon} size={15} />
+        {LANE_ORDER.map((lane) => {
+          const items = lanes[lane];
+          if (items.length === 0) return null;
+          const meta = LANE_META[lane];
+          return (
+            <div key={lane} className="mb-5">
+              {/* Lane header with arrow */}
+              <div className="flex items-center gap-2 mb-2 pl-1">
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className="h-2 w-2 rounded-full"
+                    style={{ background: accent }}
+                  />
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                    {meta.short}
+                  </span>
+                </div>
+                <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, ${accentSoft}, transparent)` }} />
+                <span className="text-[10px] font-mono text-muted-foreground/50">
+                  {items.length}
+                </span>
               </div>
-              <span className={`text-xs font-medium transition-colors ${activeNode === node.id ? "text-foreground" : "text-muted-foreground"}`}>
-                {node.label}
-              </span>
-            </motion.div>
-          ))}
-        </div>
+              <div className="grid grid-cols-2 gap-2">
+                {items.map((node, i) => {
+                  const isActive = activeNode === node.id;
+                  return (
+                    <motion.div
+                      key={node.id}
+                      className={`flex items-center gap-2.5 rounded-xl border p-2.5 transition-colors ${
+                        isActive
+                          ? isCyan
+                            ? "border-primary/30 bg-primary/[0.05]"
+                            : "border-secondary/30 bg-secondary/[0.05]"
+                          : "border-[rgba(255,255,255,0.06)]"
+                      }`}
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ ...spring, delay: 0.04 * i }}
+                      onTouchStart={() => setActiveNode(node.id)}
+                      onTouchEnd={() => setActiveNode(null)}
+                    >
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
+                          isActive
+                            ? isCyan
+                              ? "border-primary/30 text-primary bg-primary/10"
+                              : "border-secondary/30 text-secondary bg-secondary/10"
+                            : "border-[rgba(255,255,255,0.06)] text-muted-foreground bg-card/40"
+                        }`}
+                      >
+                        <LucideIcon name={node.icon} size={13} />
+                      </div>
+                      <span
+                        className={`text-[11px] font-medium leading-tight ${
+                          isActive ? "text-foreground" : "text-muted-foreground"
+                        }`}
+                      >
+                        {node.label}
+                      </span>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
