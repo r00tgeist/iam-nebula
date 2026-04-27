@@ -221,6 +221,21 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
               <stop offset="50%" stopColor={accent} stopOpacity="0.9" />
               <stop offset="100%" stopColor={accent} stopOpacity="0" />
             </linearGradient>
+            {/* Pill node background gradient — subtle top-to-bottom depth */}
+            <linearGradient id={`node-bg-${concept.id}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="hsl(240, 18%, 13%)" />
+              <stop offset="100%" stopColor="hsl(240, 22%, 8%)" />
+            </linearGradient>
+            {/* Source orb gradient */}
+            <radialGradient id={`source-orb-${concept.id}`} cx="35%" cy="30%" r="80%">
+              <stop offset="0%" stopColor={accent} stopOpacity="0.55" />
+              <stop offset="60%" stopColor={accent} stopOpacity="0.18" />
+              <stop offset="100%" stopColor={accent} stopOpacity="0.05" />
+            </radialGradient>
+            {/* Background dot pattern */}
+            <pattern id={`dots-${concept.id}`} x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+              <circle cx="1" cy="1" r="0.8" fill="rgba(255,255,255,0.04)" />
+            </pattern>
             {/* Glow filter for flowing dots */}
             <filter id={`glow-${concept.id}`} x="-200%" y="-200%" width="500%" height="500%">
               <feGaussianBlur stdDeviation="2.5" result="blur" />
@@ -231,7 +246,7 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
               </feMerge>
             </filter>
             <filter id={`glow-strong-${concept.id}`} x="-200%" y="-200%" width="500%" height="500%">
-              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feGaussianBlur stdDeviation="4.5" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="blur" />
@@ -239,6 +254,9 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
               </feMerge>
             </filter>
           </defs>
+
+          {/* Background dots */}
+          <rect x="0" y="0" width={W} height={H} fill={`url(#dots-${concept.id})`} />
 
           {/* Lane headers + faint vertical guides */}
           {LANE_ORDER.map((lane, idx) => {
