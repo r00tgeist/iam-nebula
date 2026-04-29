@@ -326,7 +326,7 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
             return items.map((item, i) => {
               if (lane !== "protocol") return null;
               const pos = layout[item.id];
-              const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_W / 2 + 8);
+              const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_R + 6);
               const active = activeNode === item.id;
               const dimmed = activeNode !== null && !active;
               const pathId = `srcpath-${concept.id}-${item.id}`;
@@ -399,7 +399,7 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
           {/* If no protocols, draw source → services directly */}
           {phase >= 3 && lanes.protocol.length === 0 && lanes.service.map((item, i) => {
             const pos = layout[item.id];
-            const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_W / 2 + 8);
+            const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_R + 6);
             return (
               <motion.path
                 key={`srcs-${item.id}`}
@@ -424,7 +424,7 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
           {/* If no services & no protocols, source → practices */}
           {phase >= 3 && lanes.protocol.length === 0 && lanes.service.length === 0 && lanes.practice.map((item, i) => {
             const pos = layout[item.id];
-            const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_W / 2 + 8);
+            const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_R + 6);
             return (
               <motion.path
                 key={`srcp-${item.id}`}
@@ -452,7 +452,7 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
             if (!from || !to) return null;
             const active = isLinkActive(link.from, link.to);
             const dimmed = activeNode !== null && !active;
-            const c = curve(from.x, from.y, to.x, to.y, NODE_W / 2 + 4, NODE_W / 2 + 8);
+            const c = curve(from.x, from.y, to.x, to.y, NODE_R + 4, NODE_R + 6);
             const pathId = `xpath-${concept.id}-${i}`;
             return (
               <g key={`xl-${i}`}>
@@ -675,7 +675,7 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
                   </foreignObject>
                   {/* Label inside pill */}
                   <text
-                    x={pos.x - NODE_W / 2 + 42} y={pos.y + 4}
+                    x={pos.x - NODE_R + 42} y={pos.y + 4}
                     className="text-[11px] transition-colors"
                     fill={isActive ? "hsl(var(--foreground))" : isLinked ? "hsl(var(--foreground))" : "rgba(255,255,255,0.65)"}
                     style={{
