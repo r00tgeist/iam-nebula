@@ -503,86 +503,63 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
             );
           })}
 
-          {/* ── Source node (concept) ── */}
+          {/* ── Source node — minimalist ── */}
           <AnimatePresence>
             {phase >= 1 && (
               <motion.g
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={spring}
-                style={{ transformOrigin: `${SOURCE_X}px ${SOURCE_Y}px` }}
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               >
-                {/* Outer glow halo */}
-                <circle
-                  cx={SOURCE_X} cy={SOURCE_Y} r={SOURCE_R + 40}
-                  fill={`url(#source-orb-${concept.id})`}
+                {/* Soft pulse ring */}
+                <motion.circle
+                  cx={SOURCE_X} cy={SOURCE_Y}
+                  r={SOURCE_R}
+                  fill="none"
+                  stroke={accent}
+                  strokeWidth="1"
+                  initial={{ r: SOURCE_R, opacity: 0.5 }}
+                  animate={{ r: SOURCE_R + 16, opacity: 0 }}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
                 />
-                {/* Pulsing rings */}
-                {[0, 0.8, 1.6].map((delay) => (
-                  <motion.circle
-                    key={`ring-${delay}`}
-                    cx={SOURCE_X} cy={SOURCE_Y}
-                    r={SOURCE_R + 2}
-                    fill="none"
-                    stroke={accent}
-                    strokeWidth="1"
-                    initial={{ r: SOURCE_R + 2, opacity: 0.5 }}
-                    animate={{ r: SOURCE_R + 30, opacity: 0 }}
-                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut", delay }}
-                  />
-                ))}
-                {/* Outer ring */}
+                {/* Outer hairline ring */}
                 <circle
                   cx={SOURCE_X} cy={SOURCE_Y} r={SOURCE_R + 6}
                   fill="none"
                   stroke={accent}
+                  strokeOpacity="0.25"
                   strokeWidth="1"
-                  strokeOpacity="0.35"
-                  strokeDasharray="3 3"
                 />
-                {/* Main orb */}
+                {/* Main disc */}
                 <circle
                   cx={SOURCE_X} cy={SOURCE_Y} r={SOURCE_R}
-                  fill={`url(#source-orb-${concept.id})`}
+                  fill="hsl(var(--background))"
                   stroke={accent}
-                  strokeWidth="1.8"
-                  strokeOpacity="0.85"
-                  filter={`url(#glow-${concept.id})`}
+                  strokeWidth="1.2"
                 />
-                {/* Inner highlight */}
-                <circle
-                  cx={SOURCE_X - 8} cy={SOURCE_Y - 10} r={SOURCE_R * 0.45}
-                  fill="rgba(255,255,255,0.08)"
-                />
-                <foreignObject x={SOURCE_X - 26} y={SOURCE_Y - 26} width={52} height={52}>
+                {/* Center icon */}
+                <foreignObject x={SOURCE_X - 11} y={SOURCE_Y - 11} width={22} height={22}>
                   <div className="flex h-full w-full items-center justify-center">
                     <div className={isCyan ? "text-primary" : "text-secondary"}>
-                      <LucideIcon name={concept.icon} size={30} />
+                      <LucideIcon name={concept.icon} size={16} />
                     </div>
                   </div>
                 </foreignObject>
-                {/* Title plate below */}
-                <rect
-                  x={SOURCE_X - 70} y={SOURCE_Y + SOURCE_R + 14}
-                  width={140} height={38} rx={8}
-                  fill="rgba(255,255,255,0.02)"
-                  stroke="rgba(255,255,255,0.06)"
-                  strokeWidth="1"
-                />
+                {/* Label below */}
                 <text
-                  x={SOURCE_X} y={SOURCE_Y + SOURCE_R + 30}
+                  x={SOURCE_X} y={SOURCE_Y + SOURCE_R + 22}
                   textAnchor="middle"
-                  className="fill-foreground text-[12px] font-bold"
-                  style={{ fontFamily: "'Syne', sans-serif" }}
+                  className="fill-foreground text-[12px]"
+                  style={{ fontFamily: "'Syne', sans-serif", fontWeight: 600 }}
                 >
                   {concept.shortTitle}
                 </text>
                 <text
-                  x={SOURCE_X} y={SOURCE_Y + SOURCE_R + 45}
+                  x={SOURCE_X} y={SOURCE_Y + SOURCE_R + 36}
                   textAnchor="middle"
-                  className="text-[8px] font-mono uppercase tracking-[0.2em]"
-                  fill={accent}
-                  fillOpacity="0.7"
+                  className="text-[8px] font-mono uppercase"
+                  fill="rgba(255,255,255,0.4)"
+                  style={{ letterSpacing: "0.22em" }}
                 >
                   Source
                 </text>
