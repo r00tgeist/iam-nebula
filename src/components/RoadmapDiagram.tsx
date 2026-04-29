@@ -529,7 +529,7 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
 
         {/* Hint */}
         <p className="text-center text-[10px] font-mono text-muted-foreground/40 mt-2 uppercase tracking-wider">
-          Live flow • Hover any node to focus its path
+          Hover a node to focus its connections
         </p>
       </div>
 
