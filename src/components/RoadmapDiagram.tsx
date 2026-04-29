@@ -82,18 +82,18 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
     return () => [t1, t2, t3, t4].forEach(clearTimeout);
   }, [concept.id]);
 
-  // Layout (SVG)
-  const W = 980;
-  const H = 600;
-  const SOURCE_X = 110;
+  // Layout (SVG) — minimal, generous spacing
+  const W = 920;
+  const H = 520;
+  const SOURCE_X = 80;
   const SOURCE_Y = H / 2;
-  const SOURCE_R = 44;
-  const LANE_X = [340, 620, 880];
-  // Pill node dimensions
-  const NODE_W = 150;
-  const NODE_H = 44;
-  const NODE_RX = NODE_H / 2;
-  const LANE_HEADER_Y = 54;
+  const SOURCE_R = 18;
+  const LANE_X = [320, 580, 840];
+  // Compact circular nodes with inline label
+  const NODE_R = 6;
+  const LABEL_OFFSET = 14;
+  const LABEL_RIGHT_PAD = 110; // approx label width, used for curve endpoint
+  const LANE_HEADER_Y = 46;
 
   // Position nodes vertically within each lane column
   const layout = useMemo(() => {
@@ -113,13 +113,13 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
     return map;
   }, [lanes]);
 
-  // Helper: compute a bezier curve path between two points (anchored to pill edges)
-  const curve = (x1: number, y1: number, x2: number, y2: number, startW = 0, endW = NODE_W / 2 + 10) => {
-    const sx = x1 + startW;
-    const ex = x2 - endW;
+  // Helper: compute a bezier curve path between two points
+  const curve = (x1: number, y1: number, x2: number, y2: number, startPad = 0, endPad = NODE_R + 4) => {
+    const sx = x1 + startPad;
+    const ex = x2 - endPad;
     const dx = ex - sx;
-    const cx1 = sx + dx * 0.5;
-    const cx2 = ex - dx * 0.5;
+    const cx1 = sx + dx * 0.55;
+    const cx2 = ex - dx * 0.55;
     return {
       d: `M ${sx},${y1} C ${cx1},${y1} ${cx2},${y2} ${ex},${y2}`,
       sx, sy: y1, ex, ey: y2,
@@ -184,81 +184,14 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
       <div className="hidden md:block">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto">
           <defs>
-            {/* Arrow marker */}
-            <marker
-              id={`arrow-${concept.id}`}
-              viewBox="0 0 10 10"
-              refX="8" refY="5"
-              markerWidth="6" markerHeight="6"
-              orient="auto-start-reverse"
-            >
-              <path d="M0,0 L10,5 L0,10 z" fill={accent} fillOpacity="0.65" />
-            </marker>
-            <marker
-              id={`arrow-active-${concept.id}`}
-              viewBox="0 0 10 10"
-              refX="8" refY="5"
-              markerWidth="7" markerHeight="7"
-              orient="auto-start-reverse"
-            >
-              <path d="M0,0 L10,5 L0,10 z" fill={accent} />
-            </marker>
-            <marker
-              id={`arrow-dim-${concept.id}`}
-              viewBox="0 0 10 10"
-              refX="8" refY="5"
-              markerWidth="5" markerHeight="5"
-              orient="auto-start-reverse"
-            >
-              <path d="M0,0 L10,5 L0,10 z" fill="rgba(255,255,255,0.18)" />
-            </marker>
+            {/* Subtle radial glow for source */}
             <radialGradient id={`src-grad-${concept.id}`} cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor={accent} stopOpacity="0.35" />
+              <stop offset="0%" stopColor={accent} stopOpacity="0.18" />
               <stop offset="100%" stopColor={accent} stopOpacity="0" />
             </radialGradient>
-            <linearGradient id={`flow-${concept.id}`} x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor={accent} stopOpacity="0" />
-              <stop offset="50%" stopColor={accent} stopOpacity="0.9" />
-              <stop offset="100%" stopColor={accent} stopOpacity="0" />
-            </linearGradient>
-            {/* Pill node background gradient — subtle top-to-bottom depth */}
-            <linearGradient id={`node-bg-${concept.id}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="hsl(240, 18%, 13%)" />
-              <stop offset="100%" stopColor="hsl(240, 22%, 8%)" />
-            </linearGradient>
-            {/* Source orb gradient */}
-            <radialGradient id={`source-orb-${concept.id}`} cx="35%" cy="30%" r="80%">
-              <stop offset="0%" stopColor={accent} stopOpacity="0.55" />
-              <stop offset="60%" stopColor={accent} stopOpacity="0.18" />
-              <stop offset="100%" stopColor={accent} stopOpacity="0.05" />
-            </radialGradient>
-            {/* Background dot pattern */}
-            <pattern id={`dots-${concept.id}`} x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
-              <circle cx="1" cy="1" r="0.8" fill="rgba(255,255,255,0.04)" />
-            </pattern>
-            {/* Glow filter for flowing dots */}
-            <filter id={`glow-${concept.id}`} x="-200%" y="-200%" width="500%" height="500%">
-              <feGaussianBlur stdDeviation="2.5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-            <filter id={`glow-strong-${concept.id}`} x="-200%" y="-200%" width="500%" height="500%">
-              <feGaussianBlur stdDeviation="4.5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
           </defs>
 
-          {/* Background dots */}
-          <rect x="0" y="0" width={W} height={H} fill={`url(#dots-${concept.id})`} />
-
-          {/* Lane headers + faint vertical guides */}
+          {/* Lane headers — minimal label + thin guide */}
           {LANE_ORDER.map((lane, idx) => {
             const x = LANE_X[idx];
             const meta = LANE_META[lane];
@@ -268,54 +201,42 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
             return (
               <motion.g
                 key={`lane-${lane}`}
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: phase >= 2 ? 1 : 0, y: phase >= 2 ? 0 : -8 }}
-                transition={{ duration: 0.5, delay: 0.07 * idx }}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: phase >= 2 ? 1 : 0, y: phase >= 2 ? 0 : -6 }}
+                transition={{ duration: 0.5, delay: 0.08 * idx, ease: [0.22, 1, 0.36, 1] }}
               >
-                {/* Vertical guide */}
+                {/* Vertical guide line */}
                 <line
-                  x1={x} y1={LANE_HEADER_Y + 24}
-                  x2={x} y2={H - 25}
-                  stroke={highlighted ? accentSoft : "rgba(255,255,255,0.04)"}
+                  x1={x} y1={LANE_HEADER_Y + 14}
+                  x2={x} y2={H - 30}
+                  stroke={highlighted ? accentSoft : "rgba(255,255,255,0.05)"}
                   strokeWidth="1"
-                  strokeDasharray="2 8"
                   style={{ transition: "stroke 0.3s" }}
                 />
-                {/* Header pill */}
-                <g transform={`translate(${x}, ${LANE_HEADER_Y})`}>
-                  <rect
-                    x={-95} y={-18} width={190} height={36} rx={18}
-                    fill={highlighted ? accentDim : "rgba(255,255,255,0.025)"}
-                    stroke={highlighted ? accent : "rgba(255,255,255,0.08)"}
-                    strokeWidth="1"
-                    style={{ transition: "all 0.3s" }}
-                  />
-                  {/* Icon dot */}
-                  <circle
-                    cx={-72} cy={0} r={4}
-                    fill={accent}
-                    fillOpacity={highlighted ? 1 : 0.5}
-                    style={{ transition: "fill-opacity 0.3s" }}
-                  />
-                  <text
-                    x={-58} y={4}
-                    className="text-[10px] font-mono uppercase tracking-[0.15em]"
-                    fill={highlighted ? accent : "rgba(255,255,255,0.6)"}
-                    style={{ transition: "fill 0.3s" }}
-                  >
-                    {meta.short}
-                  </text>
-                  {/* Count badge */}
-                  <text
-                    x={82} y={4}
-                    textAnchor="end"
-                    className="text-[9px] font-mono"
-                    fill={highlighted ? accent : "rgba(255,255,255,0.35)"}
-                    style={{ transition: "fill 0.3s" }}
-                  >
-                    {String(count).padStart(2, "0")}
-                  </text>
-                </g>
+                {/* Header marker dot */}
+                <circle
+                  cx={x} cy={LANE_HEADER_Y}
+                  r={2.5}
+                  fill={highlighted ? accent : "rgba(255,255,255,0.4)"}
+                  style={{ transition: "fill 0.3s" }}
+                />
+                {/* Label */}
+                <text
+                  x={x + 10} y={LANE_HEADER_Y + 4}
+                  className="text-[10px] font-mono uppercase"
+                  fill={highlighted ? accent : "rgba(255,255,255,0.55)"}
+                  style={{ transition: "fill 0.3s", letterSpacing: "0.18em" }}
+                >
+                  {meta.short}
+                </text>
+                {/* Count */}
+                <text
+                  x={x + 10} y={LANE_HEADER_Y + 18}
+                  className="text-[9px] font-mono"
+                  fill="rgba(255,255,255,0.3)"
+                >
+                  {String(count).padStart(2, "0")}
+                </text>
               </motion.g>
             );
           })}
@@ -326,71 +247,45 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
             return items.map((item, i) => {
               if (lane !== "protocol") return null;
               const pos = layout[item.id];
-              const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_W / 2 + 8);
+              const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_R + 6);
               const active = activeNode === item.id;
               const dimmed = activeNode !== null && !active;
               const pathId = `srcpath-${concept.id}-${item.id}`;
               return (
                 <g key={`src-${item.id}`}>
-                  {/* Underglow */}
-                  <path
-                    d={c.d}
-                    fill="none"
-                    stroke={accent}
-                    strokeWidth={active ? 6 : 3.5}
-                    strokeOpacity={dimmed ? 0.04 : active ? 0.55 : 0.22}
-                    strokeLinecap="round"
-                    filter={`url(#glow-${active ? "strong-" : ""}${concept.id})`}
-                    style={{ transition: "stroke-opacity 0.25s, stroke-width 0.25s" }}
-                  />
-                  {/* Main dashed flowing path */}
                   <motion.path
                     id={pathId}
                     d={c.d}
                     fill="none"
                     stroke={active ? accent : accentSoft}
-                    strokeWidth={active ? 1.8 : 1.1}
-                    strokeOpacity={dimmed ? 0.15 : active ? 1 : 0.7}
-                    strokeDasharray="6 5"
+                    strokeWidth={active ? 1.4 : 1}
+                    strokeOpacity={dimmed ? 0.12 : active ? 1 : 0.55}
                     strokeLinecap="round"
                     initial={{ pathLength: 0, opacity: 0 }}
-                    animate={{
-                      pathLength: 1,
-                      opacity: 1,
-                      strokeDashoffset: [0, -22],
-                    }}
+                    animate={{ pathLength: 1, opacity: 1 }}
                     transition={{
-                      pathLength: { duration: 0.7, delay: 0.05 * i, ease: "easeOut" },
-                      opacity: { duration: 0.4, delay: 0.05 * i },
-                      strokeDashoffset: {
-                        duration: active ? 0.9 : 1.8,
-                        repeat: Infinity,
-                        ease: "linear",
-                      },
+                      pathLength: { duration: 0.9, delay: 0.06 * i, ease: [0.22, 1, 0.36, 1] },
+                      opacity: { duration: 0.4, delay: 0.06 * i },
                     }}
-                    style={{ transition: "stroke 0.25s, stroke-width 0.25s, stroke-opacity 0.25s" }}
+                    style={{ transition: "stroke 0.25s, stroke-opacity 0.25s, stroke-width 0.25s" }}
                   />
-                  {/* Glowing dot traveling along the curve */}
-                  {[0, 0.5].map((offset) => (
-                    <circle
-                      key={`dot-${item.id}-${offset}`}
-                      r={active ? 3.4 : 2.4}
-                      fill={accent}
-                      fillOpacity={dimmed ? 0.2 : 1}
-                      filter={`url(#glow-${active ? "strong-" : ""}${concept.id})`}
+                  {/* Single travelling dot */}
+                  <circle
+                    r={active ? 2.4 : 1.8}
+                    fill={accent}
+                    fillOpacity={dimmed ? 0.2 : 1}
+                  >
+                    <animateMotion
+                      dur={`${active ? 1.8 : 3.2}s`}
+                      repeatCount="indefinite"
+                      begin={`${0.4 * i}s`}
+                      keyPoints="0;1"
+                      keyTimes="0;1"
+                      calcMode="linear"
                     >
-                      <animateMotion
-                        dur={`${active ? 1.6 : 2.8}s`}
-                        repeatCount="indefinite"
-                        begin={`${offset * (active ? 1.6 : 2.8)}s`}
-                        keyPoints="0;1"
-                        keyTimes="0;1"
-                        calcMode="linear"
-                      >
-                        <mpath href={`#${pathId}`} />
-                      </animateMotion>
-                    </circle>
-                  ))}
+                      <mpath href={`#${pathId}`} />
+                    </animateMotion>
+                  </circle>
                 </g>
               );
             });
@@ -399,111 +294,95 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
           {/* If no protocols, draw source → services directly */}
           {phase >= 3 && lanes.protocol.length === 0 && lanes.service.map((item, i) => {
             const pos = layout[item.id];
-            const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_W / 2 + 8);
+            const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_R + 6);
+            const pathId = `srcs-${concept.id}-${item.id}`;
             return (
-              <motion.path
-                key={`srcs-${item.id}`}
-                d={c.d}
-                fill="none"
-                stroke={accentSoft}
-                strokeWidth="1.2"
-                strokeOpacity="0.6"
-                strokeDasharray="6 5"
-                strokeLinecap="round"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 1, strokeDashoffset: [0, -22] }}
-                transition={{
-                  pathLength: { duration: 0.7, delay: 0.05 * i },
-                  opacity: { duration: 0.4, delay: 0.05 * i },
-                  strokeDashoffset: { duration: 1.8, repeat: Infinity, ease: "linear" },
-                }}
-              />
+              <g key={`srcs-${item.id}`}>
+                <motion.path
+                  id={pathId}
+                  d={c.d}
+                  fill="none"
+                  stroke={accentSoft}
+                  strokeWidth="1"
+                  strokeOpacity="0.55"
+                  strokeLinecap="round"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ pathLength: { duration: 0.9, delay: 0.06 * i, ease: [0.22, 1, 0.36, 1] }, opacity: { duration: 0.4, delay: 0.06 * i } }}
+                />
+                <circle r="1.8" fill={accent}>
+                  <animateMotion dur="3.2s" repeatCount="indefinite" begin={`${0.4 * i}s`} keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+                    <mpath href={`#${pathId}`} />
+                  </animateMotion>
+                </circle>
+              </g>
             );
           })}
 
           {/* If no services & no protocols, source → practices */}
           {phase >= 3 && lanes.protocol.length === 0 && lanes.service.length === 0 && lanes.practice.map((item, i) => {
             const pos = layout[item.id];
-            const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_W / 2 + 8);
+            const c = curve(SOURCE_X, SOURCE_Y, pos.x, pos.y, SOURCE_R + 6, NODE_R + 6);
+            const pathId = `srcp-${concept.id}-${item.id}`;
             return (
-              <motion.path
-                key={`srcp-${item.id}`}
-                d={c.d}
-                fill="none"
-                stroke={accentSoft}
-                strokeWidth="1.2"
-                strokeDasharray="6 5"
-                strokeLinecap="round"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 1, strokeDashoffset: [0, -22] }}
-                transition={{
-                  pathLength: { duration: 0.7, delay: 0.05 * i },
-                  opacity: { duration: 0.4, delay: 0.05 * i },
-                  strokeDashoffset: { duration: 1.8, repeat: Infinity, ease: "linear" },
-                }}
-              />
+              <g key={`srcp-${item.id}`}>
+                <motion.path
+                  id={pathId}
+                  d={c.d}
+                  fill="none"
+                  stroke={accentSoft}
+                  strokeWidth="1"
+                  strokeOpacity="0.55"
+                  strokeLinecap="round"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ pathLength: { duration: 0.9, delay: 0.06 * i, ease: [0.22, 1, 0.36, 1] }, opacity: { duration: 0.4, delay: 0.06 * i } }}
+                />
+                <circle r="1.8" fill={accent}>
+                  <animateMotion dur="3.2s" repeatCount="indefinite" begin={`${0.4 * i}s`} keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+                    <mpath href={`#${pathId}`} />
+                  </animateMotion>
+                </circle>
+              </g>
             );
           })}
 
-          {/* ── Cross-lane curved connections ── */}
+          {/* ── Cross-lane curved connections — hairlines ── */}
           {phase >= 4 && crossLinks.map((link, i) => {
             const from = layout[link.from];
             const to = layout[link.to];
             if (!from || !to) return null;
             const active = isLinkActive(link.from, link.to);
             const dimmed = activeNode !== null && !active;
-            const c = curve(from.x, from.y, to.x, to.y, NODE_W / 2 + 4, NODE_W / 2 + 8);
+            const c = curve(from.x, from.y, to.x, to.y, NODE_R + 4, NODE_R + 4);
             const pathId = `xpath-${concept.id}-${i}`;
             return (
               <g key={`xl-${i}`}>
-                {/* Underglow */}
-                <path
-                  d={c.d}
-                  fill="none"
-                  stroke={accent}
-                  strokeWidth={active ? 5 : 2.5}
-                  strokeOpacity={dimmed ? 0.03 : active ? 0.5 : 0.15}
-                  strokeLinecap="round"
-                  filter={`url(#glow-${active ? "strong-" : ""}${concept.id})`}
-                  style={{ transition: "stroke-opacity 0.25s, stroke-width 0.25s" }}
-                />
                 <motion.path
                   id={pathId}
                   d={c.d}
                   fill="none"
                   stroke={active ? accent : accentSoft}
-                  strokeWidth={active ? 1.6 : 0.9}
-                  strokeDasharray="4 5"
+                  strokeWidth={active ? 1.2 : 0.8}
+                  strokeOpacity={dimmed ? 0.08 : active ? 0.95 : 0.4}
                   strokeLinecap="round"
-                  strokeOpacity={dimmed ? 0.12 : active ? 1 : 0.7}
                   initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{
-                    pathLength: 1,
-                    opacity: 1,
-                    strokeDashoffset: [0, -18],
-                  }}
+                  animate={{ pathLength: 1, opacity: 1 }}
                   transition={{
-                    pathLength: { duration: 0.5, delay: 0.03 * i },
-                    opacity: { duration: 0.4, delay: 0.03 * i },
-                    strokeDashoffset: {
-                      duration: active ? 1.0 : 2.2,
-                      repeat: Infinity,
-                      ease: "linear",
-                    },
+                    pathLength: { duration: 0.7, delay: 0.04 * i, ease: [0.22, 1, 0.36, 1] },
+                    opacity: { duration: 0.4, delay: 0.04 * i },
                   }}
-                  style={{ transition: "stroke 0.25s, stroke-width 0.25s, stroke-opacity 0.25s" }}
+                  style={{ transition: "stroke 0.25s, stroke-opacity 0.25s, stroke-width 0.25s" }}
                 />
-                {/* Glowing dot along curve */}
                 <circle
-                  r={active ? 3 : 2}
+                  r={active ? 2 : 1.5}
                   fill={accent}
-                  fillOpacity={dimmed ? 0.2 : 1}
-                  filter={`url(#glow-${active ? "strong-" : ""}${concept.id})`}
+                  fillOpacity={dimmed ? 0.15 : 0.95}
                 >
                   <animateMotion
-                    dur={`${active ? 1.5 : 3}s`}
+                    dur={`${active ? 2 : 4}s`}
                     repeatCount="indefinite"
-                    begin={`${0.2 * (i % 5)}s`}
+                    begin={`${0.3 * (i % 6)}s`}
                     keyPoints="0;1"
                     keyTimes="0;1"
                     calcMode="linear"
@@ -515,86 +394,63 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
             );
           })}
 
-          {/* ── Source node (concept) ── */}
+          {/* ── Source node — minimalist ── */}
           <AnimatePresence>
             {phase >= 1 && (
               <motion.g
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={spring}
-                style={{ transformOrigin: `${SOURCE_X}px ${SOURCE_Y}px` }}
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               >
-                {/* Outer glow halo */}
-                <circle
-                  cx={SOURCE_X} cy={SOURCE_Y} r={SOURCE_R + 40}
-                  fill={`url(#source-orb-${concept.id})`}
+                {/* Soft pulse ring */}
+                <motion.circle
+                  cx={SOURCE_X} cy={SOURCE_Y}
+                  r={SOURCE_R}
+                  fill="none"
+                  stroke={accent}
+                  strokeWidth="1"
+                  initial={{ r: SOURCE_R, opacity: 0.5 }}
+                  animate={{ r: SOURCE_R + 16, opacity: 0 }}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
                 />
-                {/* Pulsing rings */}
-                {[0, 0.8, 1.6].map((delay) => (
-                  <motion.circle
-                    key={`ring-${delay}`}
-                    cx={SOURCE_X} cy={SOURCE_Y}
-                    r={SOURCE_R + 2}
-                    fill="none"
-                    stroke={accent}
-                    strokeWidth="1"
-                    initial={{ r: SOURCE_R + 2, opacity: 0.5 }}
-                    animate={{ r: SOURCE_R + 30, opacity: 0 }}
-                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut", delay }}
-                  />
-                ))}
-                {/* Outer ring */}
+                {/* Outer hairline ring */}
                 <circle
                   cx={SOURCE_X} cy={SOURCE_Y} r={SOURCE_R + 6}
                   fill="none"
                   stroke={accent}
+                  strokeOpacity="0.25"
                   strokeWidth="1"
-                  strokeOpacity="0.35"
-                  strokeDasharray="3 3"
                 />
-                {/* Main orb */}
+                {/* Main disc */}
                 <circle
                   cx={SOURCE_X} cy={SOURCE_Y} r={SOURCE_R}
-                  fill={`url(#source-orb-${concept.id})`}
+                  fill="hsl(var(--background))"
                   stroke={accent}
-                  strokeWidth="1.8"
-                  strokeOpacity="0.85"
-                  filter={`url(#glow-${concept.id})`}
+                  strokeWidth="1.2"
                 />
-                {/* Inner highlight */}
-                <circle
-                  cx={SOURCE_X - 8} cy={SOURCE_Y - 10} r={SOURCE_R * 0.45}
-                  fill="rgba(255,255,255,0.08)"
-                />
-                <foreignObject x={SOURCE_X - 26} y={SOURCE_Y - 26} width={52} height={52}>
+                {/* Center icon */}
+                <foreignObject x={SOURCE_X - 11} y={SOURCE_Y - 11} width={22} height={22}>
                   <div className="flex h-full w-full items-center justify-center">
                     <div className={isCyan ? "text-primary" : "text-secondary"}>
-                      <LucideIcon name={concept.icon} size={30} />
+                      <LucideIcon name={concept.icon} size={16} />
                     </div>
                   </div>
                 </foreignObject>
-                {/* Title plate below */}
-                <rect
-                  x={SOURCE_X - 70} y={SOURCE_Y + SOURCE_R + 14}
-                  width={140} height={38} rx={8}
-                  fill="rgba(255,255,255,0.02)"
-                  stroke="rgba(255,255,255,0.06)"
-                  strokeWidth="1"
-                />
+                {/* Label below */}
                 <text
-                  x={SOURCE_X} y={SOURCE_Y + SOURCE_R + 30}
+                  x={SOURCE_X} y={SOURCE_Y + SOURCE_R + 22}
                   textAnchor="middle"
-                  className="fill-foreground text-[12px] font-bold"
-                  style={{ fontFamily: "'Syne', sans-serif" }}
+                  className="fill-foreground text-[12px]"
+                  style={{ fontFamily: "'Syne', sans-serif", fontWeight: 600 }}
                 >
                   {concept.shortTitle}
                 </text>
                 <text
-                  x={SOURCE_X} y={SOURCE_Y + SOURCE_R + 45}
+                  x={SOURCE_X} y={SOURCE_Y + SOURCE_R + 36}
                   textAnchor="middle"
-                  className="text-[8px] font-mono uppercase tracking-[0.2em]"
-                  fill={accent}
-                  fillOpacity="0.7"
+                  className="text-[8px] font-mono uppercase"
+                  fill="rgba(255,255,255,0.4)"
+                  style={{ letterSpacing: "0.22em" }}
                 >
                   Source
                 </text>
@@ -612,79 +468,58 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
               return (
                 <motion.g
                   key={node.id}
-                  initial={{ scale: 0.6, opacity: 0, y: 6 }}
+                  initial={{ opacity: 0, x: -8 }}
                   animate={{
-                    scale: 1,
-                    opacity: isDimmed ? 0.3 : 1,
-                    y: 0,
+                    opacity: isDimmed ? 0.25 : 1,
+                    x: 0,
                   }}
-                  transition={{ ...spring, delay: 0.04 * (laneIdx * 2 + i) }}
-                  style={{ transformOrigin: `${pos.x}px ${pos.y}px` }}
+                  transition={{ duration: 0.5, delay: 0.05 * (laneIdx * 2 + i), ease: [0.22, 1, 0.36, 1] }}
                   onMouseEnter={() => setActiveNode(node.id)}
                   onMouseLeave={() => setActiveNode(null)}
                   className="cursor-pointer"
                 >
-                  {/* Outer glow when active */}
-                  {(isActive || isLinked) && (
-                    <rect
-                      x={pos.x - NODE_W / 2 - 4} y={pos.y - NODE_H / 2 - 4}
-                      width={NODE_W + 8} height={NODE_H + 8}
-                      rx={NODE_RX + 4}
-                      fill={accent}
-                      fillOpacity={isActive ? 0.18 : 0.08}
-                      filter={`url(#glow-${isActive ? "strong-" : ""}${concept.id})`}
+                  {/* Soft pulse ring on active */}
+                  {isActive && (
+                    <motion.circle
+                      cx={pos.x} cy={pos.y}
+                      r={NODE_R}
+                      fill="none"
+                      stroke={accent}
+                      strokeWidth="1"
+                      initial={{ r: NODE_R, opacity: 0.6 }}
+                      animate={{ r: NODE_R + 10, opacity: 0 }}
+                      transition={{ duration: 1.4, repeat: Infinity, ease: "easeOut" }}
                     />
                   )}
-                  {/* Pill background with gradient depth */}
-                  <rect
-                    x={pos.x - NODE_W / 2} y={pos.y - NODE_H / 2}
-                    width={NODE_W} height={NODE_H}
-                    rx={NODE_RX}
-                    fill={`url(#node-bg-${concept.id})`}
-                    stroke={isActive ? accent : isLinked ? accentSoft : "rgba(255,255,255,0.09)"}
-                    strokeWidth={isActive ? 1.5 : 1}
-                    style={{ transition: "stroke 0.2s, stroke-width 0.2s" }}
-                  />
-                  {/* Top highlight line */}
-                  <line
-                    x1={pos.x - NODE_W / 2 + 14} y1={pos.y - NODE_H / 2 + 0.5}
-                    x2={pos.x + NODE_W / 2 - 14} y2={pos.y - NODE_H / 2 + 0.5}
-                    stroke="rgba(255,255,255,0.06)"
+                  {/* Outer ring for active/linked */}
+                  <circle
+                    cx={pos.x} cy={pos.y} r={NODE_R + 3}
+                    fill="none"
+                    stroke={isActive ? accent : isLinked ? accentSoft : "transparent"}
                     strokeWidth="1"
+                    style={{ transition: "stroke 0.25s" }}
                   />
-                  {/* Icon chip on left */}
-                  <rect
-                    x={pos.x - NODE_W / 2 + 6} y={pos.y - 14}
-                    width={28} height={28}
-                    rx={8}
-                    fill={isActive || isLinked ? accentDim : "rgba(255,255,255,0.04)"}
-                    stroke={isActive || isLinked ? accentSoft : "rgba(255,255,255,0.06)"}
+                  {/* Node dot */}
+                  <circle
+                    cx={pos.x} cy={pos.y} r={NODE_R}
+                    fill={isActive || isLinked ? accent : "hsl(var(--background))"}
+                    stroke={isActive || isLinked ? accent : "rgba(255,255,255,0.35)"}
                     strokeWidth="1"
-                    style={{ transition: "all 0.2s" }}
+                    style={{ transition: "all 0.25s" }}
                   />
-                  <foreignObject x={pos.x - NODE_W / 2 + 10} y={pos.y - 10} width={20} height={20}>
-                    <div
-                      className={`flex h-full w-full items-center justify-center transition-colors duration-200 ${
-                        isActive || isLinked
-                          ? isCyan ? "text-primary" : "text-secondary"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      <LucideIcon name={node.icon} size={14} />
-                    </div>
-                  </foreignObject>
-                  {/* Label inside pill */}
+                  {/* Inline label */}
                   <text
-                    x={pos.x - NODE_W / 2 + 42} y={pos.y + 4}
-                    className="text-[11px] transition-colors"
-                    fill={isActive ? "hsl(var(--foreground))" : isLinked ? "hsl(var(--foreground))" : "rgba(255,255,255,0.65)"}
+                    x={pos.x + LABEL_OFFSET} y={pos.y + 4}
+                    className="text-[11px]"
+                    fill={isActive || isLinked ? "hsl(var(--foreground))" : "rgba(255,255,255,0.55)"}
                     style={{
                       fontFamily: "'IBM Plex Sans', sans-serif",
-                      fontWeight: isActive ? 600 : 500,
+                      fontWeight: isActive ? 600 : 400,
                       letterSpacing: "0.01em",
+                      transition: "fill 0.25s",
                     }}
                   >
-                    {node.label.length > 18 ? node.label.slice(0, 17) + "…" : node.label}
+                    {node.label}
                   </text>
                 </motion.g>
               );
@@ -694,7 +529,7 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
 
         {/* Hint */}
         <p className="text-center text-[10px] font-mono text-muted-foreground/40 mt-2 uppercase tracking-wider">
-          Live flow • Hover any node to focus its path
+          Hover a node to focus its connections
         </p>
       </div>
 
