@@ -113,13 +113,13 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
     return map;
   }, [lanes]);
 
-  // Helper: compute a bezier curve path between two points (anchored to pill edges)
-  const curve = (x1: number, y1: number, x2: number, y2: number, startW = 0, endW = NODE_W / 2 + 10) => {
-    const sx = x1 + startW;
-    const ex = x2 - endW;
+  // Helper: compute a bezier curve path between two points
+  const curve = (x1: number, y1: number, x2: number, y2: number, startPad = 0, endPad = NODE_R + 4) => {
+    const sx = x1 + startPad;
+    const ex = x2 - endPad;
     const dx = ex - sx;
-    const cx1 = sx + dx * 0.5;
-    const cx2 = ex - dx * 0.5;
+    const cx1 = sx + dx * 0.55;
+    const cx2 = ex - dx * 0.55;
     return {
       d: `M ${sx},${y1} C ${cx1},${y1} ${cx2},${y2} ${ex},${y2}`,
       sx, sy: y1, ex, ey: y2,
