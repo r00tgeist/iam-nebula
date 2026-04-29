@@ -258,7 +258,7 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
           {/* Background dots */}
           <rect x="0" y="0" width={W} height={H} fill={`url(#dots-${concept.id})`} />
 
-          {/* Lane headers + faint vertical guides */}
+          {/* Lane headers — minimal label + thin guide */}
           {LANE_ORDER.map((lane, idx) => {
             const x = LANE_X[idx];
             const meta = LANE_META[lane];
@@ -268,54 +268,42 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
             return (
               <motion.g
                 key={`lane-${lane}`}
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: phase >= 2 ? 1 : 0, y: phase >= 2 ? 0 : -8 }}
-                transition={{ duration: 0.5, delay: 0.07 * idx }}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: phase >= 2 ? 1 : 0, y: phase >= 2 ? 0 : -6 }}
+                transition={{ duration: 0.5, delay: 0.08 * idx, ease: [0.22, 1, 0.36, 1] }}
               >
-                {/* Vertical guide */}
+                {/* Vertical guide line */}
                 <line
-                  x1={x} y1={LANE_HEADER_Y + 24}
-                  x2={x} y2={H - 25}
-                  stroke={highlighted ? accentSoft : "rgba(255,255,255,0.04)"}
+                  x1={x} y1={LANE_HEADER_Y + 14}
+                  x2={x} y2={H - 30}
+                  stroke={highlighted ? accentSoft : "rgba(255,255,255,0.05)"}
                   strokeWidth="1"
-                  strokeDasharray="2 8"
                   style={{ transition: "stroke 0.3s" }}
                 />
-                {/* Header pill */}
-                <g transform={`translate(${x}, ${LANE_HEADER_Y})`}>
-                  <rect
-                    x={-95} y={-18} width={190} height={36} rx={18}
-                    fill={highlighted ? accentDim : "rgba(255,255,255,0.025)"}
-                    stroke={highlighted ? accent : "rgba(255,255,255,0.08)"}
-                    strokeWidth="1"
-                    style={{ transition: "all 0.3s" }}
-                  />
-                  {/* Icon dot */}
-                  <circle
-                    cx={-72} cy={0} r={4}
-                    fill={accent}
-                    fillOpacity={highlighted ? 1 : 0.5}
-                    style={{ transition: "fill-opacity 0.3s" }}
-                  />
-                  <text
-                    x={-58} y={4}
-                    className="text-[10px] font-mono uppercase tracking-[0.15em]"
-                    fill={highlighted ? accent : "rgba(255,255,255,0.6)"}
-                    style={{ transition: "fill 0.3s" }}
-                  >
-                    {meta.short}
-                  </text>
-                  {/* Count badge */}
-                  <text
-                    x={82} y={4}
-                    textAnchor="end"
-                    className="text-[9px] font-mono"
-                    fill={highlighted ? accent : "rgba(255,255,255,0.35)"}
-                    style={{ transition: "fill 0.3s" }}
-                  >
-                    {String(count).padStart(2, "0")}
-                  </text>
-                </g>
+                {/* Header marker dot */}
+                <circle
+                  cx={x} cy={LANE_HEADER_Y}
+                  r={2.5}
+                  fill={highlighted ? accent : "rgba(255,255,255,0.4)"}
+                  style={{ transition: "fill 0.3s" }}
+                />
+                {/* Label */}
+                <text
+                  x={x + 10} y={LANE_HEADER_Y + 4}
+                  className="text-[10px] font-mono uppercase"
+                  fill={highlighted ? accent : "rgba(255,255,255,0.55)"}
+                  style={{ transition: "fill 0.3s", letterSpacing: "0.18em" }}
+                >
+                  {meta.short}
+                </text>
+                {/* Count */}
+                <text
+                  x={x + 10} y={LANE_HEADER_Y + 18}
+                  className="text-[9px] font-mono"
+                  fill="rgba(255,255,255,0.3)"
+                >
+                  {String(count).padStart(2, "0")}
+                </text>
               </motion.g>
             );
           })}
