@@ -82,18 +82,18 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
     return () => [t1, t2, t3, t4].forEach(clearTimeout);
   }, [concept.id]);
 
-  // Layout (SVG)
-  const W = 980;
-  const H = 600;
-  const SOURCE_X = 110;
+  // Layout (SVG) — minimal, generous spacing
+  const W = 920;
+  const H = 520;
+  const SOURCE_X = 80;
   const SOURCE_Y = H / 2;
-  const SOURCE_R = 44;
-  const LANE_X = [340, 620, 880];
-  // Pill node dimensions
-  const NODE_W = 150;
-  const NODE_H = 44;
-  const NODE_RX = NODE_H / 2;
-  const LANE_HEADER_Y = 54;
+  const SOURCE_R = 18;
+  const LANE_X = [320, 580, 840];
+  // Compact circular nodes with inline label
+  const NODE_R = 6;
+  const LABEL_OFFSET = 14;
+  const LABEL_RIGHT_PAD = 110; // approx label width, used for curve endpoint
+  const LANE_HEADER_Y = 46;
 
   // Position nodes vertically within each lane column
   const layout = useMemo(() => {
