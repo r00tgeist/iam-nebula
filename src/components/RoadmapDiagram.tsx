@@ -50,25 +50,37 @@ const RoadmapDiagram = ({ concept, connections }: Props) => {
     return buckets as Record<keyof typeof LANE_META, ConnectionNode[]>;
   }, [connections]);
 
-  // Pre-computed cross-links between lanes (visual storytelling: protocol→service, service→practice)
+  // Cross-links between lanes — guarantee every node in downstream lanes has at least one connection.
   const crossLinks = useMemo(() => {
     const links: Array<{ from: string; to: string }> = [];
     const protos = lanes.protocol;
     const svcs = lanes.service;
     const prax = lanes.practice;
-    // Each protocol connects to first 1-2 services (mod indexed)
-    protos.forEach((p, i) => {
-      if (svcs.length > 0) links.push({ from: p.id, to: svcs[i % svcs.length].id });
+
+    const fanout = (from: ConnectionNode[], to: ConnectionNode[]) => {
+      if (!from.length || !to.length) return;
+      // Iterate over max(from, to) so every node in BOTH columns is touched at least once.
+      const max = Math.max(from.length, to.length);
+      for (let i = 0; i < max; i++) {
+        links.push({ from: from[i % from.length].id, to: to[i % to.length].id });
+      }
+    };
+
+    fanout(protos, svcs);
+    fanout(svcs, prax);
+    // If services lane is empty, hop protocol→practice directly so practices aren't orphaned.
+    if (!svcs.length) fanout(protos, prax);
+    // If protocols lane is empty too, services should still feed practices (handled above) —
+    // and if both protocols & services are empty, the source-direct paths cover practices.
+
+    // De-duplicate identical edges.
+    const seen = new Set<string>();
+    return links.filter((l) => {
+      const k = `${l.from}->${l.to}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
     });
-    // Each service connects to a practice
-    svcs.forEach((s, i) => {
-      if (prax.length > 0) links.push({ from: s.id, to: prax[i % prax.length].id });
-    });
-    // If no services, hop protocol→practice
-    if (svcs.length === 0 && protos.length && prax.length) {
-      protos.forEach((p, i) => links.push({ from: p.id, to: prax[i % prax.length].id }));
-    }
-    return links;
   }, [lanes]);
 
   useEffect(() => {
