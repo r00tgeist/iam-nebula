@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, MotionConfig, motion, useAnimationControls } from "framer-motion";
-import { Car, CheckCircle2, Lock } from "lucide-react";
-import { Hitmarkers, Killfeed, SKEET_CSS, SkeetWatermark, useKillfeed } from "./fx";
+import { Car, Lock } from "lucide-react";
+import { CYBER_CSS, CyberBackdrop, HeadshotSnap, HexTicker, Hitmarkers, HudCorners, Killfeed, SKEET_CSS, ScanSweep, SkeetWatermark, hex, useKillfeed } from "./fx";
 import { config } from "./config";
 import { STEPS, STORAGE_KEY, freshState, loadState, norm, prefersReducedMotion, saveState, timeStamp, useNoIndex, type QuestState } from "./lib";
 import { CaptchaStep, KbaStep, LoginStep, PasswordExpiredStep, PatternStep } from "./steps/knowledge";
@@ -117,13 +117,14 @@ export default function LizaQuest() {
   return (
     <MotionConfig reducedMotion="user">
     <div className="relative min-h-[100dvh] px-4 pb-16 pt-[max(1.25rem,env(safe-area-inset-top))]">
-      <style>{SKEET_CSS}</style>
+      <style>{SKEET_CSS + CYBER_CSS}</style>
+      <CyberBackdrop />
       <Hitmarkers />
       <Killfeed entries={feed.entries} />
       <SkeetWatermark user="lizon" />
       <style>{`@keyframes lzscan{0%{transform:translateY(0)}50%{transform:translateY(255px)}100%{transform:translateY(0)}}`}</style>
 
-      <div className="mx-auto w-full max-w-md">
+      <div className="relative z-10 mx-auto w-full max-w-md">
         {/* Header */}
         <header className="mb-5 flex items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
@@ -183,9 +184,13 @@ export default function LizaQuest() {
           </div>
         </div>
 
+        <HexTicker />
+
         {/* Card */}
         <motion.main animate={shake} className="glass-card relative overflow-hidden p-5 sm:p-7">
           <div className="skeet-bar absolute inset-x-0 top-0 h-[2px] opacity-80" aria-hidden />
+          <HudCorners />
+          <ScanSweep key={`sweep-${step}`} />
           <AnimatePresence>
             {granted && (
               <motion.div
@@ -195,28 +200,7 @@ export default function LizaQuest() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <div className="relative">
-                  <motion.span
-                    className="absolute inset-0 rounded-full border-2 border-primary"
-                    initial={{ scale: 1, opacity: 0.8 }}
-                    animate={{ scale: 2.4, opacity: 0 }}
-                    transition={{ duration: 0.9, ease: "easeOut" }}
-                  />
-                  <motion.div initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 300, damping: 15 }}>
-                    <CheckCircle2 size={48} className="text-primary" />
-                  </motion.div>
-                </div>
-                <motion.p
-                  className="mt-4 font-mono text-sm font-medium tracking-[0.2em] text-primary"
-                  initial={{ opacity: 0, letterSpacing: "0.6em" }}
-                  animate={{ opacity: 1, letterSpacing: "0.2em" }}
-                  transition={{ delay: 0.15, duration: 0.5 }}
-                >
-                  ACCESS GRANTED
-                </motion.p>
-                <motion.p className="mt-1 text-sm text-muted-foreground" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}>
-                  Фактор подтверждён
-                </motion.p>
+                <HeadshotSnap />
               </motion.div>
             )}
           </AnimatePresence>
@@ -315,22 +299,34 @@ export default function LizaQuest() {
 }
 
 const BOOT_LINES = [
-  "establishing secure channel…",
-  "TLS 1.3 handshake ✓",
-  `resolving tenant ${config.meta.tenant} ✓`,
-  "loading identity policies ✓",
-  "subject: birthday_girl",
+  `[+] attaching to process lizon.exe (pid ${1337})`,
+  `[+] resolving tenant ${config.meta.tenant}`,
+  `[+] tls 1.3 · x25519 · aes-256-gcm`,
+  `[+] 0x${hex(8)} → loading identity policies`,
+  `[+] injecting birthday.dll … ok`,
+  `[+] subject: lizon · trust: 0%`,
 ];
 
 function BootSplash() {
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center px-6">
-      <div className="w-full max-w-xs font-mono text-xs leading-relaxed text-muted-foreground">
+    <div className="relative flex min-h-[100dvh] items-center justify-center px-6">
+      <style>{CYBER_CSS}</style>
+      <CyberBackdrop />
+      <div className="relative z-10 w-full max-w-xs font-mono text-[0.7rem] leading-relaxed text-muted-foreground">
         {BOOT_LINES.map((l, i) => (
-          <motion.div key={i} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + i * 0.4 }}>
-            <span className="text-primary">›</span> {l}
+          <motion.div key={i} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + i * 0.33 }}>
+            <span className={i === BOOT_LINES.length - 2 ? "text-primary" : undefined}>{l}</span>
           </motion.div>
         ))}
+        <div className="mt-4 h-[3px] overflow-hidden rounded-full bg-muted">
+          <motion.div
+            className="skeet-bar h-full"
+            initial={{ width: "0%" }}
+            animate={{ width: "100%" }}
+            transition={{ duration: 2.3, ease: "easeInOut" }}
+          />
+        </div>
+        <style>{SKEET_CSS}</style>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { forwardRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { ScrambleText } from "./fx";
 
 export type StepProps = {
   onPass: (auditLine?: string) => void;
@@ -9,7 +10,9 @@ export type StepProps = {
 export function StepHeader({ title, subtitle }: { title: string; subtitle?: ReactNode }) {
   return (
     <div className="mb-6">
-      <h1 className="font-display text-2xl font-bold leading-tight text-foreground sm:text-[1.7rem]">{title}</h1>
+      <h1 className="font-display text-2xl font-bold leading-tight text-foreground sm:text-[1.7rem]">
+        <ScrambleText text={title} />
+      </h1>
       {subtitle && <p className="mt-2 text-[0.95rem] leading-relaxed text-muted-foreground">{subtitle}</p>}
     </div>
   );
