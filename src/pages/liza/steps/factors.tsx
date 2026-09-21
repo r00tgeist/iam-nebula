@@ -133,7 +133,7 @@ export function PushStep({ onPass, onFail, number }: StepProps & { number: numbe
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
-        if (matches(code, [c.approvalCode])) onPass(`PUSH_APPROVED approver="${config.meta.adminName}" number_match=${number}`);
+        if (matches(code, c.approvalCodes)) onPass(`PUSH_APPROVED approver="${config.meta.adminName}" number_match=${number}`);
         else {
           setErr("Код подтверждения неверный. Администратор точно его сказал?");
           onFail("PUSH_DENIED bad_approval_code");
@@ -147,7 +147,7 @@ export function PushStep({ onPass, onFail, number }: StepProps & { number: numbe
           <span>{config.meta.orgName}</span>
           <span className="ml-auto">сейчас</span>
         </div>
-        <p className="mt-2 text-sm text-foreground">Кто-то пытается войти в аккаунт «Лиза». Это вы?</p>
+        <p className="mt-2 text-sm text-foreground">Кто-то пытается войти в аккаунт «лизон». Это вы?</p>
         <div className="mt-4 flex flex-col items-center">
           <span className="text-xs text-muted-foreground">Число для подтверждения</span>
           <span className="font-display text-6xl font-extrabold tracking-tight text-gradient-primary">{number}</span>
@@ -350,6 +350,7 @@ export function PamStep({ onPass }: StepProps) {
     `Запрос создан: доступ к ресурсу «${c.resource}»`,
     `Обоснование: ${c.reason}`,
     `Согласующий уведомлён: ${config.meta.adminName}`,
+    c.secondApprover,
     "Проверка политики доступа: день рождения = true",
     "Проверка риска: низкий",
     `Одобрено. Сессия выдана на ${c.duration}`,
@@ -358,7 +359,7 @@ export function PamStep({ onPass }: StepProps) {
 
   useEffect(() => {
     if (shown >= lines.length) return;
-    const t = setTimeout(() => setShown((s) => s + 1), shown === 2 ? 1500 : 800);
+    const t = setTimeout(() => setShown((s) => s + 1), shown === 2 || shown === 3 ? 1500 : 800);
     return () => clearTimeout(t);
   }, [shown, lines.length]);
 

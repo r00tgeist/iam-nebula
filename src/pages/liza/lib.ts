@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { config } from "./config";
 
 export const STEPS = [
   { id: "login", label: "Логин" },
@@ -59,6 +60,12 @@ export const norm = (s: string) =>
 export const matches = (input: string, accepted: string[]) =>
   accepted.map(norm).includes(norm(input));
 
+/** input contains any keyword (after normalisation); empty input never matches */
+export const matchesKeyword = (input: string, keywords: string[]) => {
+  const v = norm(input);
+  return v.length > 0 && keywords.some((k) => v.includes(norm(k)));
+};
+
 export const timeStamp = () => {
   const d = new Date();
   return d.toTimeString().slice(0, 8);
@@ -71,7 +78,7 @@ export function useNoIndex() {
     meta.content = "noindex, nofollow";
     document.head.appendChild(meta);
     const prevTitle = document.title;
-    document.title = "Вход · Liza Identity Provider";
+    document.title = `Вход — ${config.meta.orgName}`;
     return () => {
       meta.remove();
       document.title = prevTitle;

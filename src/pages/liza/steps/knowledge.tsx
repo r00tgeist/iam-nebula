@@ -2,7 +2,7 @@ import { useRef, useState, type PointerEvent as RPointerEvent } from "react";
 import { Check, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { config, type PasswordRule } from "../config";
-import { matches, norm } from "../lib";
+import { matches, matchesKeyword, norm } from "../lib";
 import { ErrorNote, Field, HintNote, PrimaryButton, StepHeader, type StepProps } from "../ui";
 
 /* ---------------------------------------------------------------- 1. Login */
@@ -124,7 +124,7 @@ export function KbaStep({ onPass, onFail }: StepProps) {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const correct = c.questions.filter((q, i) => matches(answers[i], q.answers)).length;
+    const correct = c.questions.filter((q, i) => matchesKeyword(answers[i], q.answers)).length;
     if (correct >= c.passCount) {
       onPass(`KBA_OK correct=${correct}/${c.questions.length}`);
     } else {
