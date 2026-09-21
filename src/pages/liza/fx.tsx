@@ -306,7 +306,7 @@ export function CyberBackdrop() {
 
   return (
     <>
-      <canvas ref={ref} className="pointer-events-none fixed inset-0 z-0 opacity-[0.22]" aria-hidden />
+      <canvas ref={ref} className="pointer-events-none fixed inset-0 z-0 opacity-[0.15]" aria-hidden />
       <div className="cyber-scanlines pointer-events-none fixed inset-0 z-0" aria-hidden />
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,hsl(var(--background))_100%)]" aria-hidden />
     </>
@@ -406,48 +406,31 @@ export function ScanSweep() {
 
 /* ------------------------------------------- aimbot snap + headshot overlay */
 export function HeadshotSnap() {
-  const [lines] = useState(() =>
-    Array.from({ length: 4 }, (_, i) =>
-      [
-        `sig ecdsa-p256 r=${hex(16).toLowerCase()}`,
-        `0x${hex(4)}  ${hex(2)} ${hex(2)} ${hex(2)} ${hex(2)}  ${hex(2)} ${hex(2)} ${hex(2)} ${hex(2)}`,
-        `hitbox=head dmg=100 bt=${rnd(12)}t`,
-        `assert.verify() → 0x00 OK`,
-      ][i],
-    ),
-  );
   const arm = "absolute bg-primary";
   return (
     <div className="flex flex-col items-center">
       <div className="relative h-16 w-16">
-        {/* crosshair arms converge */}
         {[
-          { cls: `${arm} left-1/2 top-0 h-5 w-[2px] -translate-x-1/2`, from: { y: -26 } },
-          { cls: `${arm} bottom-0 left-1/2 h-5 w-[2px] -translate-x-1/2`, from: { y: 26 } },
-          { cls: `${arm} left-0 top-1/2 h-[2px] w-5 -translate-y-1/2`, from: { x: -26 } },
-          { cls: `${arm} right-0 top-1/2 h-[2px] w-5 -translate-y-1/2`, from: { x: 26 } },
+          { cls: `${arm} left-1/2 top-0 h-5 w-[2px] -translate-x-1/2`, from: { y: -22 } },
+          { cls: `${arm} bottom-0 left-1/2 h-5 w-[2px] -translate-x-1/2`, from: { y: 22 } },
+          { cls: `${arm} left-0 top-1/2 h-[2px] w-5 -translate-y-1/2`, from: { x: -22 } },
+          { cls: `${arm} right-0 top-1/2 h-[2px] w-5 -translate-y-1/2`, from: { x: 22 } },
         ].map((a, i) => (
           <motion.span
             key={i}
             className={a.cls}
-            initial={{ ...a.from, opacity: 0.4 }}
-            animate={{ x: 0, y: 0, opacity: [0.4, 1, 0] }}
-            transition={{ duration: 0.5, ease: "easeOut", opacity: { duration: 0.75, times: [0, 0.6, 1] } }}
+            initial={{ ...a.from, opacity: 0.5 }}
+            animate={{ x: 0, y: 0, opacity: [0.5, 1, 0] }}
+            transition={{ duration: 0.3, ease: "easeOut", opacity: { duration: 0.45, times: [0, 0.6, 1] } }}
           />
         ))}
-        <motion.span
-          className="absolute inset-0 rounded-full border-2 border-primary"
-          initial={{ scale: 1, opacity: 0 }}
-          animate={{ scale: [1, 2.6], opacity: [0.9, 0] }}
-          transition={{ delay: 0.45, duration: 0.8, ease: "easeOut" }}
-        />
         <motion.div
           className="absolute inset-0 flex items-center justify-center text-primary"
-          initial={{ scale: 0, rotate: -40 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: 0.42, type: "spring", stiffness: 420, damping: 14 }}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.25, type: "spring", stiffness: 500, damping: 20 }}
         >
-          <svg width="40" height="40" viewBox="0 0 16 16" aria-hidden>
+          <svg width="38" height="38" viewBox="0 0 16 16" aria-hidden>
             <circle cx="8" cy="7" r="5.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
             <circle cx="6" cy="6.5" r="1" fill="currentColor" />
             <circle cx="10" cy="6.5" r="1" fill="currentColor" />
@@ -456,20 +439,13 @@ export function HeadshotSnap() {
         </motion.div>
       </div>
       <motion.p
-        className="mt-4 font-mono text-sm font-medium text-primary"
-        initial={{ opacity: 0, letterSpacing: "0.6em" }}
-        animate={{ opacity: 1, letterSpacing: "0.2em" }}
-        transition={{ delay: 0.5, duration: 0.45 }}
+        className="mt-3 font-mono text-sm font-medium tracking-[0.2em] text-primary"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.25 }}
       >
         ACCESS GRANTED
       </motion.p>
-      <div className="mt-3 space-y-0.5 text-center font-mono text-[0.6rem] text-primary/60">
-        {lines.map((l, i) => (
-          <motion.div key={i} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 + i * 0.1 }}>
-            {l}
-          </motion.div>
-        ))}
-      </div>
     </div>
   );
 }

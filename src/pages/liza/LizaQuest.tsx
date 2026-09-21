@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, MotionConfig, motion, useAnimationControls } from "framer-motion";
 import { Car, Lock } from "lucide-react";
-import { CYBER_CSS, CyberBackdrop, HeadshotSnap, HexTicker, Hitmarkers, HudCorners, Killfeed, SKEET_CSS, ScanSweep, SkeetWatermark, hex, useKillfeed } from "./fx";
+import { CYBER_CSS, CyberBackdrop, HeadshotSnap, HexTicker, Hitmarkers, HudCorners, Killfeed, SKEET_CSS, SkeetWatermark, hex, useKillfeed } from "./fx";
 import { config } from "./config";
 import { STEPS, STORAGE_KEY, freshState, loadState, norm, prefersReducedMotion, saveState, timeStamp, useNoIndex, type QuestState } from "./lib";
 import { CaptchaStep, KbaStep, LoginStep, PasswordExpiredStep, PatternStep } from "./steps/knowledge";
@@ -82,7 +82,7 @@ export default function LizaQuest() {
         setGranted(false);
         advance();
         window.scrollTo({ top: 0 });
-      }, 1300);
+      }, 850);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [log, update],
@@ -147,9 +147,7 @@ export default function LizaQuest() {
             <span className="text-muted-foreground">
               {isFinal ? "Аутентификация завершена" : `Шаг ${state.step + 1} из ${LAST}: ${STEPS[state.step].label}`}
             </span>
-            <motion.span key={trust} initial={{ scale: 1.4 }} animate={{ scale: 1 }} className="font-mono text-primary">
-              доверие {trust}%
-            </motion.span>
+            <span className="font-mono text-primary">доверие {trust}%</span>
           </div>
           <div className="relative h-5" aria-hidden>
             <motion.div
@@ -157,7 +155,7 @@ export default function LizaQuest() {
               initial={false}
               animate={{
                 left: `calc(${trust}% - ${trust === 100 ? 18 : trust * 0.18}px)`,
-                rotate: trust === 100 ? [0, -14, 10, 0] : [0, -6, 0],
+                rotate: trust === 100 ? [0, -14, 10, 0] : 0,
               }}
               transition={{
                 left: { type: "spring", stiffness: 60, damping: 14 },
@@ -190,7 +188,6 @@ export default function LizaQuest() {
         <motion.main animate={shake} className="glass-card relative overflow-hidden p-5 sm:p-7">
           <div className="skeet-bar absolute inset-x-0 top-0 h-[2px] opacity-80" aria-hidden />
           <HudCorners />
-          <ScanSweep key={`sweep-${step}`} />
           <AnimatePresence>
             {granted && (
               <motion.div
