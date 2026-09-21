@@ -7,13 +7,17 @@ import GalleryPage from "./pages/GalleryPage";
 import NotFound from "./pages/NotFound";
 
 const ConceptPage = lazy(() => import("./pages/ConceptPage"));
+const LizaQuest = lazy(() => import("./pages/liza/LizaQuest"));
+const LizaPrint = lazy(() => import("./pages/liza/LizaPrint"));
+
+const isLiza = typeof window !== "undefined" && window.location.pathname.startsWith("/liza");
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <MouseFollower />
+      {!isLiza && <MouseFollower />}
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<GalleryPage />} />
@@ -25,6 +29,8 @@ const App = () => (
               </Suspense>
             }
           />
+          <Route path="/liza" element={<Suspense fallback={null}><LizaQuest /></Suspense>} />
+          <Route path="/liza/print" element={<Suspense fallback={null}><LizaPrint /></Suspense>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
