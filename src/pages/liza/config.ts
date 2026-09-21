@@ -47,7 +47,7 @@ export const config = {
     passCount: 2,
     questions: [
       // засчитывается, если ответ СОДЕРЖИТ любое из ключевых слов
-      { q: "Где мы смотрели на звёзды?", answers: ["юндол", "белмекен", "банско", "пирин"] },
+      { q: "Кого мы видели за сеткой в горах?", answers: ["медвед", "мишк", "мишутк", "bear"] },
       { q: "Куда уходит Аполлон, когда на нас обижен?", answers: ["ванн", "туалет"] },
       { q: "На какой машине мы ездим?", answers: ["пассат", "passat", "cc", "сс", "фольксваген", "volkswagen", "vw"] },
     ],
@@ -57,19 +57,18 @@ export const config = {
   captcha: {
     title: "Подтвердите, что вы не робот",
     subtitle: "Выберите все изображения, где есть мы.",
-    // Ровно 9 картинок. src: путь к файлу в public/liza/ (например "/liza/captcha-1.jpg")
-    // или пустая строка — тогда показывается заглушка с номером. isUs: правильная ли это картинка.
+    // Ровно 9 плиток. src — фото из public/liza/, emoji + caption — плитка-обманка.
     images: [
-      { src: "", isUs: true },
-      { src: "", isUs: false },
-      { src: "", isUs: true },
-      { src: "", isUs: false },
-      { src: "", isUs: true },
-      { src: "", isUs: false },
-      { src: "", isUs: false },
-      { src: "", isUs: true },
-      { src: "", isUs: false },
-    ],
+      { emoji: "🐈", caption: "Аполлон", isUs: false },
+      { src: "/liza/us-1.jpg", isUs: true },
+      { emoji: "🚗", caption: "Passat", isUs: false },
+      { emoji: "🐻", caption: "медведь без нас", isUs: false },
+      { src: "/liza/us-2.jpg", isUs: true },
+      { emoji: "🏔️", caption: "просто горы", isUs: false },
+      { src: "/liza/us-3.jpg", isUs: true },
+      { emoji: "🤖", caption: "робот", isUs: false },
+      { emoji: "💃", caption: "эщкэрэ", isUs: false },
+    ] as CaptchaTile[],
     failHint: "Не все выбраны или выбрано лишнее. Аполлон бы справился лучше.",
   },
 
@@ -92,7 +91,7 @@ export const config = {
   otp: {
     title: "Одноразовый код",
     subtitle: "Код отправлен на ваше физическое устройство.",
-    code: "260926", // ровно 6 цифр, печатается на /liza/print
+    code: "040621", // 04.06.2021 — день, когда мы начали встречаться
     hint: "Карточка с кодом спрятана там, куда уходит Аполлон, когда на нас обижен.",
   },
 
@@ -133,10 +132,16 @@ export const config = {
   /* 11. Финал — ЗАГЛУШКА, заполним позже ------------------------------- */
   final: {
     title: "Доступ предоставлен",
-    text: "[Здесь будет финал. Опишешь, что должно быть, и я доделаю.]",
+    text:
+      "с днём рождения, лизон 💃\n\n" +
+      "4 июня 2021 ты впервые выдала мне доступ. за пять лет ни разу его не отозвала, и это моя самая ценная привилегия\n\n" +
+      "последний ресурс этой сессии — твой подарок. он пахнет лучше любого журнала аудита\n\n" +
+      "забери его у администратора",
     signature: "сергеич",
   },
 };
+
+export type CaptchaTile = { src?: string; emoji?: string; caption?: string; isUs: boolean };
 
 export type PasswordRule =
   | { type: "minLength"; value: number; label: string }

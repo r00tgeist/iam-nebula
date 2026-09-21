@@ -193,11 +193,14 @@ export function CaptchaStep({ onPass, onFail }: StepProps) {
             ) : (
               <span
                 className={cn(
-                  "flex h-full w-full items-center justify-center font-mono text-lg text-muted-foreground transition-transform duration-150",
+                  "flex h-full w-full flex-col items-center justify-center gap-1 transition-transform duration-150",
                   sel[i] && "scale-[0.86]",
                 )}
               >
-                {i + 1}
+                <span className="text-4xl leading-none" aria-hidden>
+                  {img.emoji ?? "?"}
+                </span>
+                {img.caption && <span className="px-1 text-center text-[0.7rem] leading-tight text-muted-foreground">{img.caption}</span>}
               </span>
             )}
             {sel[i] && (
