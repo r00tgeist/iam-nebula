@@ -59,7 +59,7 @@ export const config = {
     subtitle: "Выберите все изображения, где есть мы.",
     // Ровно 9 плиток. src — фото из public/liza/, emoji + caption — плитка-обманка.
     images: [
-      { emoji: "🐈", caption: "Аполлон", isUs: false },
+      { src: "/liza/decoy-apollo.jpg", isUs: false },
       { src: "/liza/us-1.jpg", isUs: true },
       { emoji: "🚗", caption: "Passat", isUs: false },
       { emoji: "🐻", caption: "медведь без нас", isUs: false },
