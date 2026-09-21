@@ -6,6 +6,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { config } from "../config";
 import { matches, norm, prefersReducedMotion } from "../lib";
 import { ErrorNote, Field, HintNote, PrimaryButton, StepHeader, type StepProps } from "../ui";
+import { playPhonk } from "../fx";
 
 /* ------------------------------------------------------------------ 6. OTP */
 export function OtpStep({ onPass, onFail }: StepProps) {
@@ -379,7 +380,20 @@ export function PamStep({ onPass }: StepProps) {
             className="flex items-start gap-3 text-sm"
           >
             <KeyRound size={16} className={cn("mt-0.5 shrink-0", i === lines.length - 1 ? "text-primary" : "text-secondary")} />
-            <span className={i === lines.length - 1 ? "font-semibold text-foreground" : "text-foreground/85"}>{l}</span>
+            <span className={i === lines.length - 1 ? "font-semibold text-foreground" : "text-foreground/85"}>
+              {l}
+              {l === c.secondApprover && (
+                <motion.span
+                  className="ml-2 inline-flex -rotate-12 items-center gap-1 rounded border-2 border-primary px-1.5 py-0.5 align-middle font-mono text-[0.65rem] font-bold tracking-widest text-primary"
+                  initial={{ scale: 2.6, opacity: 0, rotate: -30 }}
+                  animate={{ scale: 1, opacity: 1, rotate: -12 }}
+                  transition={{ delay: 0.7, type: "spring", stiffness: 500, damping: 18 }}
+                  aria-hidden
+                >
+                  🐾 APPROVED
+                </motion.span>
+              )}
+            </span>
           </motion.li>
         ))}
         {!complete && <li className="pl-7 text-sm text-muted-foreground motion-safe:animate-pulse">Обработка…</li>}
@@ -402,10 +416,15 @@ export function FinalStep() {
   const c = config.final;
   const [open, setOpen] = useState(false);
   const [shaking, setShaking] = useState(false);
+  const [sound, setSound] = useState(true);
+  const [flash, setFlash] = useState(false);
 
   const unlock = () => {
     if (open || shaking) return;
+    if (sound) playPhonk();
     setShaking(true);
+    setTimeout(() => setFlash(true), prefersReducedMotion() ? 0 : 860);
+    setTimeout(() => setFlash(false), prefersReducedMotion() ? 0 : 1150);
     setTimeout(() => {
       setShaking(false);
       setOpen(true);
@@ -414,6 +433,18 @@ export function FinalStep() {
 
   return (
     <div className="text-center">
+      <AnimatePresence>
+        {flash && (
+          <motion.div
+            className="pointer-events-none fixed inset-0 z-[70] bg-white"
+            initial={{ opacity: 0.95 }}
+            animate={{ opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.45 }}
+            aria-hidden
+          />
+        )}
+      </AnimatePresence>
       <motion.div
         initial={{ scale: 0, rotate: -30 }}
         animate={{ scale: 1, rotate: 0 }}
@@ -507,16 +538,39 @@ export function FinalStep() {
 
       <AnimatePresence mode="wait">
         {!open ? (
-          <motion.p
-            key="hint"
-            exit={{ opacity: 0 }}
-            className="font-mono text-xs uppercase tracking-widest text-primary motion-safe:animate-pulse"
-          >
-            {shaking ? "расшифровка…" : c.boxLabel}
-          </motion.p>
+          <motion.div key="hint" exit={{ opacity: 0 }}>
+            <p className="font-mono text-xs uppercase tracking-widest text-primary motion-safe:animate-pulse">
+              {shaking ? "расшифровка…" : c.boxLabel}
+            </p>
+            {!shaking && (
+              <button
+                type="button"
+                onClick={() => setSound((v) => !v)}
+                className="mt-3 text-xs text-muted-foreground underline-offset-4 hover:underline"
+                aria-pressed={sound}
+              >
+                {sound ? "🔊 со звуком" : "🔇 без звука"}
+              </button>
+            )}
+          </motion.div>
         ) : (
           <motion.div key="reveal" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-            <p className="font-display text-2xl font-extrabold text-foreground">{c.revealTitle}</p>
+            <motion.p
+              className="font-display text-2xl font-extrabold text-foreground"
+              initial={{ scale: 1.6 }}
+              animate={{
+                scale: 1,
+                textShadow: [
+                  "3px 0 0 rgba(255,0,80,.9), -3px 0 0 rgba(0,229,255,.9)",
+                  "-2px 1px 0 rgba(255,0,80,.9), 2px -1px 0 rgba(0,229,255,.9)",
+                  "1px 0 0 rgba(255,0,80,.6), -1px 0 0 rgba(0,229,255,.6)",
+                  "0 0 0 rgba(0,0,0,0), 0 0 0 rgba(0,0,0,0)",
+                ],
+              }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            >
+              {c.revealTitle}
+            </motion.p>
             <p className="mx-auto mt-3 max-w-[32ch] whitespace-pre-line text-base leading-relaxed text-foreground/90">{c.revealText}</p>
             <p className="mt-8 font-mono text-sm text-muted-foreground">{c.signature}</p>
           </motion.div>

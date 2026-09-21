@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, MotionConfig, motion, useAnimationControls } from "framer-motion";
-import { CheckCircle2, Lock } from "lucide-react";
+import { Car, CheckCircle2, Lock } from "lucide-react";
+import { Hitmarkers, Killfeed, SKEET_CSS, SkeetWatermark, useKillfeed } from "./fx";
 import { config } from "./config";
 import { STEPS, STORAGE_KEY, freshState, loadState, norm, prefersReducedMotion, saveState, timeStamp, useNoIndex, type QuestState } from "./lib";
 import { CaptchaStep, KbaStep, LoginStep, PasswordExpiredStep, PatternStep } from "./steps/knowledge";
@@ -34,6 +35,9 @@ export default function LizaQuest() {
   });
   const [granted, setGranted] = useState(false);
   const shake = useAnimationControls();
+  const feed = useKillfeed();
+  const stepRef = useRef(state.step);
+  stepRef.current = state.step;
   const [booting, setBooting] = useState(() => state.step === 0 && !boot.debug);
 
   useEffect(() => {
@@ -67,6 +71,7 @@ export default function LizaQuest() {
   const onPass = useCallback(
     (line?: string) => {
       if (line) log(line);
+      feed.push({ kind: "kill", victim: STEPS[stepRef.current]?.label.toLowerCase() });
       const advance = () => update((s) => ({ ...s, step: Math.min(LAST, s.step + 1) }));
       if (prefersReducedMotion()) {
         advance();
@@ -79,14 +84,17 @@ export default function LizaQuest() {
         window.scrollTo({ top: 0 });
       }, 1300);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [log, update],
   );
 
   const onFail = useCallback(
     (line: string) => {
       log(line);
+      feed.push({ kind: "miss" });
       shake.start({ x: [0, -10, 10, -7, 7, -3, 0], transition: { duration: 0.45 } });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [log, shake],
   );
 
@@ -108,7 +116,11 @@ export default function LizaQuest() {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className="relative min-h-[100dvh] px-4 pb-10 pt-[max(1.25rem,env(safe-area-inset-top))]">
+    <div className="relative min-h-[100dvh] px-4 pb-16 pt-[max(1.25rem,env(safe-area-inset-top))]">
+      <style>{SKEET_CSS}</style>
+      <Hitmarkers />
+      <Killfeed entries={feed.entries} />
+      <SkeetWatermark user="lizon" />
       <style>{`@keyframes lzscan{0%{transform:translateY(0)}50%{transform:translateY(255px)}100%{transform:translateY(0)}}`}</style>
 
       <div className="mx-auto w-full max-w-md">
@@ -138,6 +150,22 @@ export default function LizaQuest() {
               доверие {trust}%
             </motion.span>
           </div>
+          <div className="relative h-5" aria-hidden>
+            <motion.div
+              className="absolute bottom-0.5 text-primary"
+              initial={false}
+              animate={{
+                left: `calc(${trust}% - ${trust === 100 ? 18 : trust * 0.18}px)`,
+                rotate: trust === 100 ? [0, -14, 10, 0] : [0, -6, 0],
+              }}
+              transition={{
+                left: { type: "spring", stiffness: 60, damping: 14 },
+                rotate: { duration: 0.6, delay: 0.5 },
+              }}
+            >
+              <Car size={18} strokeWidth={1.8} />
+            </motion.div>
+          </div>
           <div
             className="h-1.5 overflow-hidden rounded-full bg-muted"
             role="progressbar"
@@ -157,6 +185,7 @@ export default function LizaQuest() {
 
         {/* Card */}
         <motion.main animate={shake} className="glass-card relative overflow-hidden p-5 sm:p-7">
+          <div className="skeet-bar absolute inset-x-0 top-0 h-[2px] opacity-80" aria-hidden />
           <AnimatePresence>
             {granted && (
               <motion.div
