@@ -40,12 +40,12 @@ export function OtpStep({ onPass, onFail }: StepProps) {
           pattern="^[0-9]*$"
           autoFocus
         >
-          <InputOTPGroup className="gap-1.5 sm:gap-2">
+          <InputOTPGroup className="gap-1 min-[380px]:gap-1.5 sm:gap-2">
             {Array.from({ length: 6 }, (_, i) => (
               <InputOTPSlot
                 key={i}
                 index={i}
-                className="h-12 w-11 rounded-lg border border-input bg-background/60 font-mono text-xl first:rounded-lg last:rounded-lg sm:h-14 sm:w-12"
+                className="h-11 w-9 rounded-lg border border-input bg-background/60 font-mono text-lg first:rounded-lg last:rounded-lg min-[380px]:h-12 min-[380px]:w-11 min-[380px]:text-xl sm:h-14 sm:w-12"
               />
             ))}
           </InputOTPGroup>
@@ -361,7 +361,7 @@ export function PamStep({ onPass }: StepProps) {
 
   useEffect(() => {
     if (shown >= lines.length) return;
-    const t = setTimeout(() => setShown((s) => s + 1), shown === 2 || shown === 3 ? 1500 : 800);
+    const t = setTimeout(() => setShown((s) => s + 1), shown === 2 || shown === 3 ? 1100 : 550);
     return () => clearTimeout(t);
   }, [shown, lines.length]);
 
@@ -384,9 +384,9 @@ export function PamStep({ onPass }: StepProps) {
               {l}
               {l === c.secondApprover && (
                 <motion.span
-                  className="ml-2 inline-flex -rotate-12 items-center gap-1 rounded border-2 border-primary px-1.5 py-0.5 align-middle font-mono text-[0.65rem] font-bold tracking-widest text-primary"
+                  className="mt-1.5 flex w-fit -rotate-6 items-center gap-1 rounded border-2 border-primary px-1.5 py-0.5 align-middle font-mono text-[0.65rem] font-bold tracking-widest text-primary"
                   initial={{ scale: 2.6, opacity: 0, rotate: -30 }}
-                  animate={{ scale: 1, opacity: 1, rotate: -12 }}
+                  animate={{ scale: 1, opacity: 1, rotate: -6 }}
                   transition={{ delay: 0.7, type: "spring", stiffness: 500, damping: 18 }}
                   aria-hidden
                 >

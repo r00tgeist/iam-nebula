@@ -12,13 +12,14 @@ export function Hitmarkers() {
 
   useEffect(() => {
     if (prefersReducedMotion()) return;
-    const onDown = (e: PointerEvent) => {
+    const onDown = (e: MouseEvent) => {
       const h = { id: ++id.current, x: e.clientX, y: e.clientY };
       setHits((prev) => [...prev.slice(-6), h]);
       setTimeout(() => setHits((prev) => prev.filter((p) => p.id !== h.id)), 380);
     };
-    window.addEventListener("pointerdown", onDown, { passive: true });
-    return () => window.removeEventListener("pointerdown", onDown);
+    // "click" (not pointerdown) so scrolling a page doesn't spray hitmarkers
+    window.addEventListener("click", onDown, { passive: true });
+    return () => window.removeEventListener("click", onDown);
   }, []);
 
   return (
@@ -72,7 +73,7 @@ export function Killfeed({ entries }: { entries: FeedEntry[] }) {
   return (
     <div
       className="pointer-events-none fixed right-2 z-[55] flex flex-col items-end gap-1"
-      style={{ top: "calc(env(safe-area-inset-top, 0px) + 56px)" }}
+      style={{ top: "calc(env(safe-area-inset-top, 0px) + 10px)" }}
       aria-hidden
     >
       <AnimatePresence initial={false}>
@@ -370,10 +371,16 @@ export function ScrambleText({ text, className }: { text: string; className?: st
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [text]);
+  // final text reserves the layout; scrambled glyphs are stacked on top, so the heading never jumps
   return (
-    <span className={className}>
+    <span className={`inline-grid overflow-hidden ${className ?? ""}`}>
       <span className="sr-only">{text}</span>
-      <span aria-hidden>{out}</span>
+      <span aria-hidden className="invisible col-start-1 row-start-1">
+        {text}
+      </span>
+      <span aria-hidden className="col-start-1 row-start-1">
+        {out}
+      </span>
     </span>
   );
 }

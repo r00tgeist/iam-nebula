@@ -38,6 +38,7 @@ export default function LizaQuest() {
   const feed = useKillfeed();
   const stepRef = useRef(state.step);
   stepRef.current = state.step;
+  const advancing = useRef(false);
   const [booting, setBooting] = useState(() => state.step === 0 && !boot.debug);
 
   useEffect(() => {
@@ -70,17 +71,21 @@ export default function LizaQuest() {
 
   const onPass = useCallback(
     (line?: string) => {
+      if (advancing.current) return; // ignore double submits while the success beat plays
+      advancing.current = true;
       if (line) log(line);
       feed.push({ kind: "kill", victim: STEPS[stepRef.current]?.label.toLowerCase() });
       const advance = () => update((s) => ({ ...s, step: Math.min(LAST, s.step + 1) }));
       if (prefersReducedMotion()) {
         advance();
+        advancing.current = false;
         return;
       }
       setGranted(true);
       setTimeout(() => {
         setGranted(false);
         advance();
+        advancing.current = false;
         window.scrollTo({ top: 0 });
       }, 850);
     },
@@ -105,7 +110,10 @@ export default function LizaQuest() {
     setState(s);
   };
 
-  const jump = (i: number) => update((s) => ({ ...s, step: i }));
+  const jump = (i: number) => {
+    advancing.current = false;
+    update((s) => ({ ...s, step: i }));
+  };
 
   const step = STEPS[state.step]?.id ?? "login";
   const trust = Math.round((state.step / LAST) * 100);
