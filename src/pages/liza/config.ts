@@ -66,14 +66,14 @@ export const config = {
     // required — обязательно выбрать; optional — можно выбрать или нет; остальные выбирать нельзя.
     rounds: [
       {
-        image: "/liza/decoy-apollo.jpg",
+        image: "/liza/decoy-apollo.webp",
         prompt: "Аполлоном",
         required: [5, 6, 8, 9, 10, 13, 14],
         optional: [4, 7, 11, 12, 15],
         failHint: "Аполлон обиделся, что его не узнали. Попробуй ещё раз.",
       },
       {
-        image: "/liza/us-2.jpg",
+        image: "/liza/us-2.webp",
         prompt: "самым красивым человеком",
         required: [5, 8, 9],
         optional: [4, 10, 12, 13, 14],

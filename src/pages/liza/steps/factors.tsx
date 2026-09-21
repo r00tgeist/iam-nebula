@@ -3,24 +3,24 @@ import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
 import { Bell, Camera, CheckCircle2, Fingerprint, KeyRound, ShieldCheck, Usb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import jsQR from "jsqr";
 import { config } from "../config";
-import { matches, norm, prefersReducedMotion } from "../lib";
+import { matches, norm, prefersReducedMotion, useSafeTimeout } from "../lib";
 import { ErrorNote, Field, HintNote, PrimaryButton, StepHeader, type StepProps } from "../ui";
-import { playPhonk } from "../fx";
+import { playPhonk } from "../fx-core";
 
 /* ------------------------------------------------------------------ 6. OTP */
 export function OtpStep({ onPass, onFail }: StepProps) {
   const c = config.otp;
   const [val, setVal] = useState("");
   const [err, setErr] = useState("");
+  const later = useSafeTimeout();
 
   const check = (v: string) => {
     if (v === c.code) onPass("OTP_OK factor=possession");
     else {
       setErr("Код не подошёл. Проверь цифры на карточке.");
       onFail("OTP_FAIL");
-      setTimeout(() => setVal(""), 400);
+      later(() => setVal(""), 400);
     }
   };
 
@@ -37,6 +37,7 @@ export function OtpStep({ onPass, onFail }: StepProps) {
             setVal(v.replace(/\D/g, ""));
           }}
           onComplete={check}
+          aria-label="Одноразовый код из шести цифр"
           inputMode="numeric"
           pattern="^[0-9]*$"
           autoFocus
@@ -78,11 +79,14 @@ function QrScanner({ onKey, onWrong, onClose }: { onKey: () => void; onWrong: ()
     let wrongAt = 0;
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    // the decoder is ~130 kB, so it is only downloaded when the scanner actually opens
+    let jsQR: typeof import("jsqr").default | null = null;
+    import("jsqr").then((m) => (jsQR = m.default)).catch(() => onClose(true));
 
     const loop = (t: number) => {
       raf = requestAnimationFrame(loop);
       const v = videoRef.current;
-      if (done || !v || !ctx || v.readyState < 2 || t - last < 140) return;
+      if (done || !jsQR || !v || !ctx || v.readyState < 2 || t - last < 140) return;
       last = t;
       const scale = Math.min(1, 640 / Math.max(v.videoWidth, v.videoHeight));
       canvas.width = Math.round(v.videoWidth * scale);
@@ -312,6 +316,7 @@ function FingerprintPart({ onDone, title, text }: { onDone: () => void; title: s
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
   const raf = useRef<number>();
+  const later = useSafeTimeout();
   const start = useRef(0);
 
   const tick = () => {
@@ -319,7 +324,7 @@ function FingerprintPart({ onDone, title, text }: { onDone: () => void; title: s
     setProgress(p);
     if (p >= 1) {
       setDone(true);
-      setTimeout(onDone, 900);
+      later(onDone, 900);
       return;
     }
     raf.current = requestAnimationFrame(tick);
@@ -391,6 +396,7 @@ function FacePart({ onDone }: { onDone: (camera: boolean) => void }) {
   const streamRef = useRef<MediaStream | null>(null);
   const [state, setState] = useState<"idle" | "scanning" | "done" | "denied">("idle");
   const [shot, setShot] = useState<string>("");
+  const later = useSafeTimeout();
 
   const stop = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -409,7 +415,7 @@ function FacePart({ onDone }: { onDone: (camera: boolean) => void }) {
           videoRef.current.play().catch(() => {});
         }
       });
-      setTimeout(() => {
+      later(() => {
         const v = videoRef.current;
         if (v && v.videoWidth) {
           const canvas = document.createElement("canvas");
@@ -554,6 +560,7 @@ function BreakGlass({ onBroken }: { onBroken: () => void }) {
   const [hits, setHits] = useState(0);
   const broken = hits >= 3;
   const jolt = useAnimationControls();
+  const later = useSafeTimeout();
 
   const hit = () => {
     if (broken) return;
@@ -561,7 +568,7 @@ function BreakGlass({ onBroken }: { onBroken: () => void }) {
     const n = hits + 1;
     setHits(n);
     jolt.start({ x: [0, -6, 6, -3, 0], transition: { duration: 0.25 } });
-    if (n >= 3) setTimeout(onBroken, prefersReducedMotion() ? 200 : 900);
+    if (n >= 3) later(onBroken, prefersReducedMotion() ? 200 : 900);
   };
 
   return (
@@ -697,14 +704,15 @@ export function FinalStep({ stats }: { stats: MatchStats }) {
   const [shaking, setShaking] = useState(false);
   const [sound, setSound] = useState(true);
   const [flash, setFlash] = useState(false);
+  const later = useSafeTimeout();
 
   const unlock = () => {
     if (open || shaking) return;
     if (sound) playPhonk();
     setShaking(true);
-    setTimeout(() => setFlash(true), prefersReducedMotion() ? 0 : 860);
-    setTimeout(() => setFlash(false), prefersReducedMotion() ? 0 : 1150);
-    setTimeout(() => {
+    later(() => setFlash(true), prefersReducedMotion() ? 0 : 860);
+    later(() => setFlash(false), prefersReducedMotion() ? 0 : 1150);
+    later(() => {
       setShaking(false);
       setOpen(true);
     }, prefersReducedMotion() ? 0 : 900);

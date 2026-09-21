@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { config } from "./config";
 
 export const STEPS = [
@@ -18,6 +18,7 @@ export const STEPS = [
 export type StepId = (typeof STEPS)[number]["id"];
 
 export type QuestState = {
+  v: number;
   step: number;
   hwKeyScanned: boolean;
   pushNumber: number;
@@ -28,8 +29,10 @@ export type QuestState = {
 };
 
 const KEY = "liza-quest";
+const SCHEMA = 2; // bump when QuestState changes shape; old saves are discarded
 
 export const freshState = (): QuestState => ({
+  v: SCHEMA,
   step: 0,
   hwKeyScanned: false,
   pushNumber: 10 + Math.floor(Math.random() * 90),
@@ -42,7 +45,9 @@ export function loadState(): QuestState {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return freshState();
-    return { ...freshState(), ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    if (parsed?.v !== SCHEMA || typeof parsed.step !== "number") return freshState();
+    return { ...freshState(), ...parsed };
   } catch {
     return freshState();
   }
@@ -122,3 +127,12 @@ export function useNoIndex() {
 
 export const prefersReducedMotion = () =>
   typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** setTimeout that is automatically cleared when the component unmounts. */
+export function useSafeTimeout() {
+  const ids = useRef<number[]>([]);
+  useEffect(() => () => ids.current.forEach(clearTimeout), []);
+  return useCallback((fn: () => void, ms: number) => {
+    ids.current.push(window.setTimeout(fn, ms));
+  }, []);
+}

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, MotionConfig, motion, useAnimationControls } from "framer-motion";
 import { Car, Lock } from "lucide-react";
-import { CYBER_CSS, CyberBackdrop, HeadshotSnap, HexTicker, Hitmarkers, HudCorners, Killfeed, SKEET_CSS, SkeetWatermark, hex, useKillfeed } from "./fx";
+import { CyberBackdrop, HeadshotSnap, HexTicker, Hitmarkers, HudCorners, Killfeed, SkeetWatermark } from "./fx";
+import { CYBER_CSS, SKEET_CSS, hex, useKillfeed } from "./fx-core";
 import { config } from "./config";
-import { STEPS, STORAGE_KEY, freshState, loadState, norm, prefersReducedMotion, saveState, timeStamp, useNoIndex, type QuestState } from "./lib";
+import { STEPS, STORAGE_KEY, freshState, loadState, norm, prefersReducedMotion, saveState, timeStamp, useNoIndex, useSafeTimeout, type QuestState } from "./lib";
 import { CaptchaStep, KbaStep, LoginStep, PasswordExpiredStep, PatternStep } from "./steps/knowledge";
 import { BiometricStep, FinalStep, HardwareKeyStep, OtpStep, PamStep, PushStep } from "./steps/factors";
 
@@ -39,6 +40,16 @@ export default function LizaQuest() {
   const stepRef = useRef(state.step);
   stepRef.current = state.step;
   const advancing = useRef(false);
+  const later = useSafeTimeout();
+  const cardRef = useRef<HTMLElement>(null);
+
+  // warm the cache for the captcha photos so the grid never pops in
+  useEffect(() => {
+    config.captcha.rounds.forEach((r) => {
+      const img = new Image();
+      img.src = r.image;
+    });
+  }, []);
   const [booting, setBooting] = useState(() => state.step === 0 && !boot.debug);
 
   useEffect(() => {
@@ -86,7 +97,7 @@ export default function LizaQuest() {
         return;
       }
       setGranted(true);
-      setTimeout(() => {
+      later(() => {
         setGranted(false);
         advance();
         advancing.current = false;
@@ -94,7 +105,7 @@ export default function LizaQuest() {
       }, 850);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [log, update],
+    [log, update, later],
   );
 
   const onFail = useCallback(
@@ -121,6 +132,19 @@ export default function LizaQuest() {
   };
 
   const step = STEPS[state.step]?.id ?? "login";
+
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      const card = cardRef.current;
+      if (!card || card.contains(document.activeElement)) return;
+      const h = card.querySelector<HTMLElement>("h1");
+      if (h) {
+        h.tabIndex = -1;
+        h.focus({ preventScroll: true });
+      }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [step]);
   const trust = Math.round((state.step / LAST) * 100);
   const isFinal = step === "final";
   const props = { onPass, onFail };
@@ -129,7 +153,7 @@ export default function LizaQuest() {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className="relative min-h-[100dvh] px-4 pb-16 pt-[max(1.25rem,env(safe-area-inset-top))]">
+    <div style={{ ["--muted-foreground" as string]: "240 10% 62%" }} className="relative min-h-[100dvh] px-4 pb-16 pt-[max(1.25rem,env(safe-area-inset-top))]">
       <style>{SKEET_CSS + CYBER_CSS}</style>
       <CyberBackdrop />
       <Hitmarkers />
@@ -137,7 +161,7 @@ export default function LizaQuest() {
       <SkeetWatermark user="lizon" />
       <style>{`@keyframes lzscan{0%{transform:translateY(0)}50%{transform:translateY(255px)}100%{transform:translateY(0)}}`}</style>
 
-      <div className="relative z-10 mx-auto w-full max-w-md">
+      <main className="relative z-10 mx-auto w-full max-w-md">
         {/* Header */}
         <header className="mb-5 flex items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
@@ -198,7 +222,7 @@ export default function LizaQuest() {
         <HexTicker />
 
         {/* Card */}
-        <motion.main animate={shake} className="glass-card relative overflow-hidden p-5 sm:p-7">
+        <motion.section ref={cardRef} aria-live="polite" animate={shake} className="glass-card relative overflow-hidden p-5 outline-none sm:p-7 [&_h1:focus]:outline-none">
           <div className="skeet-bar absolute inset-x-0 top-0 h-[2px] opacity-80" aria-hidden />
           <HudCorners />
           <AnimatePresence>
@@ -235,7 +259,7 @@ export default function LizaQuest() {
             {step === "final" && <FinalStep stats={{ kills: LAST, misses: state.misses, ms: (state.finishedAt ?? Date.now()) - state.startedAt }} />}
           </motion.div>
           </AnimatePresence>
-        </motion.main>
+        </motion.section>
 
         {/* QR scanned with the phone camera into a different tab / browser */}
         {boot.found && state.step < STEPS.findIndex((s) => s.id === "hardwareKey") && (
@@ -273,7 +297,7 @@ export default function LizaQuest() {
 
         {/* Debug */}
         {boot.debug && (
-          <section className="mt-8 rounded-lg border border-dashed border-secondary/50 p-3 text-xs">
+          <section aria-label="debug" className="mt-8 rounded-lg border border-dashed border-secondary/50 p-3 text-xs">
             <p className="mb-2 font-mono text-secondary">debug</p>
             <div className="flex flex-wrap gap-1.5">
               {STEPS.map((s, i) => (
@@ -306,7 +330,7 @@ export default function LizaQuest() {
             </div>
           </section>
         )}
-      </div>
+      </main>
     </div>
     </MotionConfig>
   );

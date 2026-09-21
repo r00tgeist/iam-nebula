@@ -3,7 +3,7 @@ import { Check, Eye, EyeOff } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { config, type KbaQuestion, type PasswordRule } from "../config";
-import { dateMatches, daysSince, matches, norm } from "../lib";
+import { dateMatches, daysSince, matches, norm, useSafeTimeout } from "../lib";
 import { ErrorNote, Field, HintNote, PrimaryButton, StepHeader, type StepProps } from "../ui";
 
 /* ---------------------------------------------------------------- 1. Login */
@@ -302,6 +302,7 @@ export function PatternStep({ onPass, onFail }: StepProps) {
   const [drawing, setDrawing] = useState(false);
   const [status, setStatus] = useState<"idle" | "bad" | "ok">("idle");
   const [fails, setFails] = useState(0);
+  const later = useSafeTimeout();
 
   const toLocal = (e: RPointerEvent) => {
     const r = svgRef.current!.getBoundingClientRect();
@@ -342,12 +343,12 @@ export function PatternStep({ onPass, onFail }: StepProps) {
     const ok = path.length === c.sequence.length && path.every((v, i) => v === c.sequence[i]);
     if (ok) {
       setStatus("ok");
-      setTimeout(() => onPass(`PATTERN_OK points=${path.length}`), 450);
+      later(() => onPass(`PATTERN_OK points=${path.length}`), 450);
     } else {
       setStatus("bad");
       setFails((f) => f + 1);
       onFail(`PATTERN_FAIL points=${path.length}`);
-      setTimeout(() => {
+      later(() => {
         setPath([]);
         setStatus("idle");
       }, 700);
