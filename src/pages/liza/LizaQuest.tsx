@@ -75,7 +75,11 @@ export default function LizaQuest() {
       advancing.current = true;
       if (line) log(line);
       feed.push({ kind: "kill", victim: STEPS[stepRef.current]?.label.toLowerCase() });
-      const advance = () => update((s) => ({ ...s, step: Math.min(LAST, s.step + 1) }));
+      const advance = () =>
+        update((s) => {
+          const step = Math.min(LAST, s.step + 1);
+          return { ...s, step, finishedAt: step === LAST ? s.finishedAt ?? Date.now() : s.finishedAt };
+        });
       if (prefersReducedMotion()) {
         advance();
         advancing.current = false;
@@ -96,6 +100,7 @@ export default function LizaQuest() {
   const onFail = useCallback(
     (line: string) => {
       log(line);
+      update((s) => ({ ...s, misses: s.misses + 1 }));
       feed.push({ kind: "miss" });
       shake.start({ x: [0, -10, 10, -7, 7, -3, 0], transition: { duration: 0.45 } });
     },
@@ -227,16 +232,20 @@ export default function LizaQuest() {
             {step === "push" && <PushStep {...props} number={state.pushNumber} />}
             {step === "biometric" && <BiometricStep {...props} />}
             {step === "pam" && <PamStep {...props} />}
-            {step === "final" && <FinalStep />}
+            {step === "final" && <FinalStep stats={{ kills: LAST, misses: state.misses, ms: (state.finishedAt ?? Date.now()) - state.startedAt }} />}
           </motion.div>
           </AnimatePresence>
         </motion.main>
 
-        {/* Early QR scan notice */}
-        {state.hwKeyScanned && state.step < STEPS.findIndex((s) => s.id === "hardwareKey") && (
-          <p className="mt-3 text-center text-xs text-muted-foreground">
-            Аппаратный ключ уже зарегистрирован. Он понадобится позже.
-          </p>
+        {/* QR scanned with the phone camera into a different tab / browser */}
+        {boot.found && state.step < STEPS.findIndex((s) => s.id === "hardwareKey") && (
+          <div className="mt-4 rounded-lg border border-primary/30 bg-primary/10 p-3 text-center text-sm text-foreground">
+            Ключ зарегистрирован 🔑
+            <br />
+            <span className="text-muted-foreground">
+              Если квест открыт в другой вкладке или приложении — вернись туда и нажми «Приложить ключ».
+            </span>
+          </div>
         )}
 
         {/* Audit log */}

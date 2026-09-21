@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
 import { Bell, Camera, CheckCircle2, Fingerprint, KeyRound, ShieldCheck, Usb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import jsQR from "jsqr";
 import { config } from "../config";
 import { matches, norm, prefersReducedMotion } from "../lib";
 import { ErrorNote, Field, HintNote, PrimaryButton, StepHeader, type StepProps } from "../ui";
@@ -56,10 +57,111 @@ export function OtpStep({ onPass, onFail }: StepProps) {
   );
 }
 
+/* ------------------------------------------------------- in-page QR scan */
+function keyFromQr(data: string): string {
+  try {
+    return new URL(data).searchParams.get("key") ?? data;
+  } catch {
+    return data;
+  }
+}
+
+function QrScanner({ onKey, onWrong, onClose }: { onKey: () => void; onWrong: () => void; onClose: (denied?: boolean) => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [status, setStatus] = useState<"starting" | "scanning" | "wrong">("starting");
+
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    let raf = 0;
+    let last = 0;
+    let done = false;
+    let wrongAt = 0;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+    const loop = (t: number) => {
+      raf = requestAnimationFrame(loop);
+      const v = videoRef.current;
+      if (done || !v || !ctx || v.readyState < 2 || t - last < 140) return;
+      last = t;
+      const scale = Math.min(1, 640 / Math.max(v.videoWidth, v.videoHeight));
+      canvas.width = Math.round(v.videoWidth * scale);
+      canvas.height = Math.round(v.videoHeight * scale);
+      ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
+      if (!code?.data) return;
+      if (norm(keyFromQr(code.data)) === norm(config.hardwareKey.secret)) {
+        done = true;
+        navigator.vibrate?.(40);
+        onKey();
+      } else if (t - wrongAt > 2500) {
+        wrongAt = t;
+        setStatus("wrong");
+        onWrong();
+        setTimeout(() => setStatus("scanning"), 1600);
+      }
+    };
+
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false })
+      .then((s) => {
+        stream = s;
+        const v = videoRef.current;
+        if (v) {
+          v.srcObject = s;
+          v.play().catch(() => {});
+        }
+        setStatus("scanning");
+        raf = requestAnimationFrame(loop);
+      })
+      .catch(() => onClose(true));
+
+    return () => {
+      done = true;
+      cancelAnimationFrame(raf);
+      stream?.getTracks().forEach((tr) => tr.stop());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="mt-2">
+      <div className="relative mx-auto aspect-square w-full max-w-[280px] overflow-hidden rounded-xl bg-black">
+        <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
+        {/* aim frame */}
+        <div className="pointer-events-none absolute inset-[18%]">
+          {["left-0 top-0 border-l-4 border-t-4", "right-0 top-0 border-r-4 border-t-4", "bottom-0 left-0 border-b-4 border-l-4", "bottom-0 right-0 border-b-4 border-r-4"].map((c) => (
+            <span key={c} className={cn("absolute h-7 w-7 rounded-sm", status === "wrong" ? "border-destructive" : "border-primary", c)} />
+          ))}
+          {status === "scanning" && !prefersReducedMotion() && (
+            <div className="absolute inset-x-2 top-0 h-0.5 bg-primary shadow-[0_0_12px_hsl(var(--primary))] animate-[lzqr_1.8s_ease-in-out_infinite]" />
+          )}
+        </div>
+        <style>{`@keyframes lzqr{0%,100%{top:4%}50%{top:94%}}`}</style>
+      </div>
+      <p className="mt-3 text-center text-sm text-muted-foreground" aria-live="polite">
+        {status === "starting" && "Включаю камеру…"}
+        {status === "scanning" && "Наведи камеру на ключ"}
+        {status === "wrong" && <span className="text-destructive">Это не тот ключ</span>}
+      </p>
+      <button
+        type="button"
+        onClick={() => onClose()}
+        className="mt-2 w-full py-2 text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+      >
+        Отмена
+      </button>
+    </div>
+  );
+}
+
 /* --------------------------------------------------------- 7. Hardware key */
 export function HardwareKeyStep({ onPass, onFail, scanned }: StepProps & { scanned: boolean }) {
   const c = config.hardwareKey;
   const [manual, setManual] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [camDenied, setCamDenied] = useState(false);
   const [serial, setSerial] = useState("");
   const [err, setErr] = useState("");
   const passed = useRef(false);
@@ -75,22 +177,46 @@ export function HardwareKeyStep({ onPass, onFail, scanned }: StepProps & { scann
   return (
     <div>
       <StepHeader title={c.title} subtitle={c.subtitle} />
-      <div className="flex flex-col items-center py-4">
-        <div
-          className={cn(
-            "flex h-24 w-24 items-center justify-center rounded-2xl border",
-            scanned ? "border-primary bg-primary/15 text-primary" : "border-border bg-muted/40 text-muted-foreground",
-          )}
-        >
-          {scanned ? <CheckCircle2 size={40} /> : <Usb size={40} className="motion-safe:animate-pulse" />}
+      {scanning && !scanned ? (
+        <QrScanner
+          onKey={() => {
+            passed.current = true;
+            onPass("FIDO_KEY_OK factor=possession method=camera");
+          }}
+          onWrong={() => onFail("FIDO_KEY_FAIL unknown_key")}
+          onClose={(denied) => {
+            setScanning(false);
+            if (denied) setCamDenied(true);
+          }}
+        />
+      ) : (
+        <div className="flex flex-col items-center py-4">
+          <div
+            className={cn(
+              "flex h-24 w-24 items-center justify-center rounded-2xl border",
+              scanned ? "border-primary bg-primary/15 text-primary" : "border-border bg-muted/40 text-muted-foreground",
+            )}
+          >
+            {scanned ? <CheckCircle2 size={40} /> : <Usb size={40} className="motion-safe:animate-pulse" />}
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground" aria-live="polite">
+            {scanned ? "Ключ распознан" : "Ожидание ключа…"}
+          </p>
         </div>
-        <p className="mt-3 text-sm text-muted-foreground" aria-live="polite">
-          {scanned ? "Ключ распознан" : "Ожидание ключа…"}
-        </p>
-      </div>
-      <HintNote>{c.hint}</HintNote>
+      )}
+      {!scanning && <HintNote>{c.hint}</HintNote>}
+
+      {!scanned && !scanning && !manual && (
+        <PrimaryButton type="button" className="mt-5" onClick={() => setScanning(true)}>
+          Приложить ключ
+        </PrimaryButton>
+      )}
+      {camDenied && !manual && (
+        <p className="mt-3 text-center text-sm text-muted-foreground">Камера недоступна. Отсканируй QR обычной камерой телефона или введи серийный номер.</p>
+      )}
 
       {!scanned &&
+        !scanning &&
         (manual ? (
           <form
             className="mt-5"
@@ -511,7 +637,61 @@ const PARTICLES = Array.from({ length: 18 }, (_, i) => {
   return { x: Math.cos(a) * d, y: Math.sin(a) * d - 20, e: ["✨", "💃", "🎁", "💜", "⭐", "🕺"][i % 6] };
 });
 
-export function FinalStep() {
+type MatchStats = { kills: number; misses: number; ms: number };
+
+function Scoreboard({ stats }: { stats: MatchStats }) {
+  const mins = Math.floor(stats.ms / 60000);
+  const secs = Math.floor((stats.ms % 60000) / 1000);
+  const acc = Math.round((stats.kills / (stats.kills + stats.misses)) * 100);
+  const cells = [
+    { k: "K", v: stats.kills },
+    { k: "D", v: 0 },
+    { k: "HS%", v: "100" },
+    { k: "ТОЧН.", v: `${acc}%` },
+  ];
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 1.1, duration: 0.4 }}
+      className="mx-auto mt-8 max-w-[300px] overflow-hidden rounded-lg border border-border bg-background/60 text-left"
+    >
+      <div className="skeet-bar h-[2px]" />
+      <div className="flex items-center justify-between px-3 py-2 font-mono text-[0.65rem] uppercase tracking-widest text-muted-foreground">
+        <span>итоги матча</span>
+        <span>
+          {mins}:{String(secs).padStart(2, "0")}
+        </span>
+      </div>
+      <div className="flex items-center gap-2 border-t border-border px-3 py-2.5">
+        <motion.span
+          className="text-lg text-[#f5c542]"
+          initial={{ scale: 0, rotate: -90 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ delay: 1.5, type: "spring", stiffness: 400, damping: 14 }}
+          aria-hidden
+        >
+          ★
+        </motion.span>
+        <span className="font-display text-sm font-bold text-foreground">лизон</span>
+        <span className="ml-auto rounded bg-[#f5c542]/15 px-1.5 py-0.5 font-mono text-[0.6rem] font-bold tracking-widest text-[#f5c542]">MVP</span>
+      </div>
+      <div className="grid grid-cols-4 border-t border-border text-center">
+        {cells.map((c) => (
+          <div key={c.k} className="py-2">
+            <div className="font-mono text-[0.58rem] text-muted-foreground">{c.k}</div>
+            <div className="font-mono text-sm font-bold text-foreground">{c.v}</div>
+          </div>
+        ))}
+      </div>
+      <div className="border-t border-border px-3 py-1.5 font-mono text-[0.6rem] text-muted-foreground">
+        промахов из-за резольвера: {stats.misses}
+      </div>
+    </motion.div>
+  );
+}
+
+export function FinalStep({ stats }: { stats: MatchStats }) {
   const c = config.final;
   const [open, setOpen] = useState(false);
   const [shaking, setShaking] = useState(false);
@@ -672,6 +852,7 @@ export function FinalStep() {
             </motion.p>
             <p className="mx-auto mt-3 max-w-[32ch] whitespace-pre-line text-base leading-relaxed text-foreground/90">{c.revealText}</p>
             <p className="mt-8 font-mono text-sm text-muted-foreground">{c.signature}</p>
+            <Scoreboard stats={stats} />
           </motion.div>
         )}
       </AnimatePresence>

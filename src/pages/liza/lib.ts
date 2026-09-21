@@ -22,6 +22,9 @@ export type QuestState = {
   hwKeyScanned: boolean;
   pushNumber: number;
   audit: string[];
+  startedAt: number;
+  misses: number;
+  finishedAt?: number;
 };
 
 const KEY = "liza-quest";
@@ -31,6 +34,8 @@ export const freshState = (): QuestState => ({
   hwKeyScanned: false,
   pushNumber: 10 + Math.floor(Math.random() * 90),
   audit: [],
+  startedAt: Date.now(),
+  misses: 0,
 });
 
 export function loadState(): QuestState {
