@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Bell, Camera, CheckCircle2, Fingerprint, KeyRound, ShieldCheck, Usb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -370,10 +371,16 @@ export function PamStep({ onPass }: StepProps) {
       <StepHeader title={c.title} subtitle="Just-in-time доступ с согласованием" />
       <ol className="space-y-3">
         {lines.slice(0, shown).map((l, i) => (
-          <li key={i} className="flex items-start gap-3 text-sm">
+          <motion.li
+            key={i}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-start gap-3 text-sm"
+          >
             <KeyRound size={16} className={cn("mt-0.5 shrink-0", i === lines.length - 1 ? "text-primary" : "text-secondary")} />
             <span className={i === lines.length - 1 ? "font-semibold text-foreground" : "text-foreground/85"}>{l}</span>
-          </li>
+          </motion.li>
         ))}
         {!complete && <li className="pl-7 text-sm text-muted-foreground motion-safe:animate-pulse">Обработка…</li>}
       </ol>
@@ -385,16 +392,136 @@ export function PamStep({ onPass }: StepProps) {
 }
 
 /* ---------------------------------------------------------------- 11. Final */
+const PARTICLES = Array.from({ length: 18 }, (_, i) => {
+  const a = (i / 18) * Math.PI * 2;
+  const d = 90 + (i % 3) * 30;
+  return { x: Math.cos(a) * d, y: Math.sin(a) * d - 20, e: ["✨", "💃", "🎁", "💜", "⭐", "🕺"][i % 6] };
+});
+
 export function FinalStep() {
   const c = config.final;
+  const [open, setOpen] = useState(false);
+  const [shaking, setShaking] = useState(false);
+
+  const unlock = () => {
+    if (open || shaking) return;
+    setShaking(true);
+    setTimeout(() => {
+      setShaking(false);
+      setOpen(true);
+    }, prefersReducedMotion() ? 0 : 900);
+  };
+
   return (
     <div className="text-center">
-      <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/15 text-primary glow-cyan">
+      <motion.div
+        initial={{ scale: 0, rotate: -30 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: "spring", stiffness: 260, damping: 16 }}
+        className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/15 text-primary glow-cyan"
+      >
         <ShieldCheck size={32} />
+      </motion.div>
+      <motion.h1
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="font-display text-3xl font-extrabold leading-tight text-gradient-primary"
+      >
+        {c.title}
+      </motion.h1>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5, duration: 0.6 }}
+        className="mx-auto mt-4 max-w-[34ch] whitespace-pre-line text-base leading-relaxed text-foreground/90"
+      >
+        {c.text}
+      </motion.p>
+
+      {/* Mystery box */}
+      <div className="relative mx-auto mt-10 flex h-56 w-full items-center justify-center">
+        <AnimatePresence>
+          {open &&
+            PARTICLES.map((p, i) => (
+              <motion.span
+                key={i}
+                className="pointer-events-none absolute left-1/2 top-1/2 text-xl"
+                initial={{ x: "-50%", y: "-50%", opacity: 1, scale: 0.4 }}
+                animate={{ x: `calc(-50% + ${p.x}px)`, y: `calc(-50% + ${p.y}px)`, opacity: 0, scale: 1.2 }}
+                transition={{ duration: 1.4, ease: "easeOut", delay: i * 0.015 }}
+                aria-hidden
+              >
+                {p.e}
+              </motion.span>
+            ))}
+        </AnimatePresence>
+
+        <motion.button
+          type="button"
+          onClick={unlock}
+          aria-label={open ? "Бокс открыт" : c.boxLabel}
+          className="relative h-40 w-40 focus-visible:outline-none"
+          initial={{ opacity: 0, y: 30 }}
+          animate={
+            shaking
+              ? { opacity: 1, y: 0, rotate: [0, -8, 8, -10, 10, -6, 6, 0], scale: [1, 1.05, 1.05, 1.08, 1.08, 1.1, 1.1, 1] }
+              : open
+                ? { opacity: 1, y: 0 }
+                : { opacity: 1, y: [0, -8, 0] }
+          }
+          transition={
+            shaking
+              ? { duration: 0.9 }
+              : open
+                ? { duration: 0.3 }
+                : { opacity: { delay: 0.9 }, y: { delay: 0.9, duration: 2.4, repeat: Infinity, ease: "easeInOut" } }
+          }
+        >
+          {/* glow */}
+          <motion.span
+            className="absolute inset-x-4 bottom-2 h-6 rounded-full bg-primary/40 blur-xl"
+            animate={{ opacity: open ? 0.9 : [0.3, 0.6, 0.3] }}
+            transition={open ? { duration: 0.4 } : { duration: 2.4, repeat: Infinity }}
+          />
+          {/* base */}
+          <span className="absolute bottom-3 left-1/2 h-24 w-32 -translate-x-1/2 rounded-md bg-gradient-to-b from-secondary to-secondary/70 shadow-lg">
+            <span className="absolute inset-y-0 left-1/2 w-4 -translate-x-1/2 bg-primary/90" />
+            <span className="absolute inset-0 flex items-center justify-center font-display text-4xl font-extrabold text-white/90">?</span>
+          </span>
+          {/* lid */}
+          <motion.span
+            className="absolute left-1/2 top-[34px] h-8 w-36 rounded-md bg-gradient-to-b from-secondary to-secondary/80 shadow-md"
+            style={{ x: "-50%", originX: 0.1, originY: 1 }}
+            animate={open ? { y: -34, x: "-30%", rotate: -32, opacity: 0.95 } : { y: 0, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 180, damping: 12 }}
+          >
+            <span className="absolute inset-y-0 left-1/2 w-4 -translate-x-1/2 bg-primary/90" />
+            <span className="absolute -top-5 left-1/2 flex -translate-x-1/2 gap-1">
+              <span className="h-5 w-7 -rotate-12 rounded-full border-4 border-primary" />
+              <span className="h-5 w-7 rotate-12 rounded-full border-4 border-primary" />
+            </span>
+          </motion.span>
+        </motion.button>
       </div>
-      <h1 className="font-display text-3xl font-extrabold leading-tight text-gradient-primary">{c.title}</h1>
-      <p className="mx-auto mt-4 max-w-[34ch] whitespace-pre-line text-base leading-relaxed text-foreground/90">{c.text}</p>
-      <p className="mt-8 text-sm text-muted-foreground">{c.signature}</p>
+
+      <AnimatePresence mode="wait">
+        {!open ? (
+          <motion.p
+            key="hint"
+            exit={{ opacity: 0 }}
+            className="font-mono text-xs uppercase tracking-widest text-primary motion-safe:animate-pulse"
+          >
+            {shaking ? "расшифровка…" : c.boxLabel}
+          </motion.p>
+        ) : (
+          <motion.div key="reveal" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+            <p className="font-display text-2xl font-extrabold text-foreground">{c.revealTitle}</p>
+            <p className="mx-auto mt-3 max-w-[32ch] whitespace-pre-line text-base leading-relaxed text-foreground/90">{c.revealText}</p>
+            <p className="mt-8 font-mono text-sm text-muted-foreground">{c.signature}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

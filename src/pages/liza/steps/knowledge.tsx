@@ -1,8 +1,9 @@
 import { useRef, useState, type PointerEvent as RPointerEvent } from "react";
 import { Check, Eye, EyeOff } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { config, type PasswordRule } from "../config";
-import { matches, matchesKeyword, norm } from "../lib";
+import { config, type KbaQuestion, type PasswordRule } from "../config";
+import { dateMatches, daysSince, matches, norm } from "../lib";
 import { ErrorNote, Field, HintNote, PrimaryButton, StepHeader, type StepProps } from "../ui";
 
 /* ---------------------------------------------------------------- 1. Login */
@@ -117,6 +118,21 @@ export function PasswordExpiredStep({ onPass }: StepProps) {
 }
 
 /* ------------------------------------------------------------------- 3. KBA */
+function kbaOk(q: KbaQuestion, a: string) {
+  switch (q.type) {
+    case "date":
+      return dateMatches(a, q.day, q.month, q.year);
+    case "daysSince": {
+      const n = parseInt(a.replace(/\D/g, ""), 10);
+      return !Number.isNaN(n) && Math.abs(n - daysSince(q.since)) <= q.tolerance;
+    }
+    case "keywords": {
+      const v = norm(a);
+      return q.allOf.every((k) => v.includes(norm(k)));
+    }
+  }
+}
+
 export function KbaStep({ onPass, onFail }: StepProps) {
   const c = config.kba;
   const [answers, setAnswers] = useState<string[]>(c.questions.map(() => ""));
@@ -124,7 +140,7 @@ export function KbaStep({ onPass, onFail }: StepProps) {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const correct = c.questions.filter((q, i) => matchesKeyword(answers[i], q.answers)).length;
+    const correct = c.questions.filter((q, i) => kbaOk(q, answers[i])).length;
     if (correct >= c.passCount) {
       onPass(`KBA_OK correct=${correct}/${c.questions.length}`);
     } else {
@@ -142,6 +158,7 @@ export function KbaStep({ onPass, onFail }: StepProps) {
             key={i}
             id={`lz-kba-${i}`}
             label={q.q}
+            inputMode={q.type === "daysSince" ? "numeric" : undefined}
             value={answers[i]}
             onChange={(e) => setAnswers((a) => a.map((v, j) => (j === i ? e.target.value : v)))}
           />
@@ -158,62 +175,92 @@ export function KbaStep({ onPass, onFail }: StepProps) {
 /* --------------------------------------------------------------- 4. Captcha */
 export function CaptchaStep({ onPass, onFail }: StepProps) {
   const c = config.captcha;
-  const [sel, setSel] = useState<boolean[]>(c.images.map(() => false));
+  const [round, setRound] = useState(0);
+  const [sel, setSel] = useState<Set<number>>(new Set());
   const [err, setErr] = useState("");
+  const r = c.rounds[round];
+
+  const toggle = (i: number) =>
+    setSel((prev) => {
+      const n = new Set(prev);
+      if (n.has(i)) n.delete(i);
+      else n.add(i);
+      return n;
+    });
 
   const verify = () => {
-    const ok = c.images.every((img, i) => img.isUs === sel[i]);
-    if (ok) onPass("CAPTCHA_OK human=true");
-    else {
-      setErr(c.failHint);
-      onFail("CAPTCHA_FAIL suspected_robot=true");
-      setSel(c.images.map(() => false));
+    const allowed = new Set([...r.required, ...r.optional]);
+    const ok = r.required.every((i) => sel.has(i)) && [...sel].every((i) => allowed.has(i));
+    if (!ok) {
+      setErr(r.failHint);
+      onFail(`CAPTCHA_FAIL round=${round + 1} suspected_robot=true`);
+      setSel(new Set());
+      return;
     }
+    setErr("");
+    setSel(new Set());
+    if (round + 1 < c.rounds.length) setRound(round + 1);
+    else onPass(`CAPTCHA_OK rounds=${c.rounds.length} human=true`);
   };
 
   return (
     <div>
-      <StepHeader title={c.title} subtitle={c.subtitle} />
-      <div className="grid grid-cols-3 gap-1.5 overflow-hidden rounded-lg">
-        {c.images.map((img, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => setSel((s) => s.map((v, j) => (j === i ? !v : v)))}
-            aria-pressed={sel[i]}
-            aria-label={`Изображение ${i + 1}`}
-            className="relative aspect-square overflow-hidden bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            {img.src ? (
-              <img
-                src={img.src}
-                alt=""
-                className={cn("h-full w-full object-cover transition-transform duration-150", sel[i] && "scale-[0.86]")}
-              />
-            ) : (
-              <span
-                className={cn(
-                  "flex h-full w-full flex-col items-center justify-center gap-1 transition-transform duration-150",
-                  sel[i] && "scale-[0.86]",
-                )}
+      <StepHeader title={c.title} subtitle={`Раунд ${round + 1} из ${c.rounds.length}`} />
+      <div className="overflow-hidden rounded-lg border border-border">
+        <div className="bg-primary px-4 py-3 text-primary-foreground">
+          <p className="text-sm">Выберите все квадраты с</p>
+          <p className="font-display text-xl font-bold leading-tight">{r.prompt}</p>
+        </div>
+        <motion.div
+          key={round}
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="grid grid-cols-4 gap-[3px] bg-card p-[3px]"
+        >
+          {Array.from({ length: 16 }, (_, i) => {
+            const on = sel.has(i);
+            const col = i % 4;
+            const row = Math.floor(i / 4);
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => toggle(i)}
+                aria-pressed={on}
+                aria-label={`Квадрат ${i + 1}`}
+                className="relative aspect-square overflow-hidden bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                <span className="text-4xl leading-none" aria-hidden>
-                  {img.emoji ?? "?"}
-                </span>
-                {img.caption && <span className="px-1 text-center text-[0.7rem] leading-tight text-muted-foreground">{img.caption}</span>}
-              </span>
-            )}
-            {sel[i] && (
-              <span className="absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                <Check size={13} strokeWidth={3} />
-              </span>
-            )}
-          </button>
-        ))}
+                <motion.span
+                  className="absolute inset-0"
+                  animate={{ scale: on ? 0.82 : 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  style={{
+                    backgroundImage: `url(${r.image})`,
+                    backgroundSize: "400% 400%",
+                    backgroundPosition: `${(col / 3) * 100}% ${(row / 3) * 100}%`,
+                  }}
+                />
+                <AnimatePresence>
+                  {on && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                    >
+                      <Check size={13} strokeWidth={3} />
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </button>
+            );
+          })}
+        </motion.div>
       </div>
       <ErrorNote>{err}</ErrorNote>
       <PrimaryButton type="button" onClick={verify} className="mt-6">
-        Подтвердить
+        {round + 1 < c.rounds.length ? "Далее" : "Подтвердить"}
       </PrimaryButton>
     </div>
   );

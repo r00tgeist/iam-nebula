@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence, MotionConfig, motion, useAnimationControls } from "framer-motion";
 import { CheckCircle2, Lock } from "lucide-react";
 import { config } from "./config";
 import { STEPS, STORAGE_KEY, freshState, loadState, norm, prefersReducedMotion, saveState, timeStamp, useNoIndex, type QuestState } from "./lib";
@@ -32,6 +33,14 @@ export default function LizaQuest() {
     return s;
   });
   const [granted, setGranted] = useState(false);
+  const shake = useAnimationControls();
+  const [booting, setBooting] = useState(() => state.step === 0 && !boot.debug);
+
+  useEffect(() => {
+    if (!booting) return;
+    const t = setTimeout(() => setBooting(false), prefersReducedMotion() ? 0 : 2600);
+    return () => clearTimeout(t);
+  }, [booting]);
 
   // keep several tabs in sync (QR scan often opens a new tab)
   useEffect(() => {
@@ -68,12 +77,18 @@ export default function LizaQuest() {
         setGranted(false);
         advance();
         window.scrollTo({ top: 0 });
-      }, 1100);
+      }, 1300);
     },
     [log, update],
   );
 
-  const onFail = useCallback((line: string) => log(line), [log]);
+  const onFail = useCallback(
+    (line: string) => {
+      log(line);
+      shake.start({ x: [0, -10, 10, -7, 7, -3, 0], transition: { duration: 0.45 } });
+    },
+    [log, shake],
+  );
 
   const reset = () => {
     if (!window.confirm("Выйти и начать вход заново?")) return;
@@ -89,7 +104,10 @@ export default function LizaQuest() {
   const isFinal = step === "final";
   const props = { onPass, onFail };
 
+  if (booting) return <BootSplash />;
+
   return (
+    <MotionConfig reducedMotion="user">
     <div className="relative min-h-[100dvh] px-4 pb-10 pt-[max(1.25rem,env(safe-area-inset-top))]">
       <style>{`@keyframes lzscan{0%{transform:translateY(0)}50%{transform:translateY(255px)}100%{transform:translateY(0)}}`}</style>
 
@@ -116,7 +134,9 @@ export default function LizaQuest() {
             <span className="text-muted-foreground">
               {isFinal ? "Аутентификация завершена" : `Шаг ${state.step + 1} из ${LAST}: ${STEPS[state.step].label}`}
             </span>
-            <span className="font-mono text-primary">доверие {trust}%</span>
+            <motion.span key={trust} initial={{ scale: 1.4 }} animate={{ scale: 1 }} className="font-mono text-primary">
+              доверие {trust}%
+            </motion.span>
           </div>
           <div
             className="h-1.5 overflow-hidden rounded-full bg-muted"
@@ -126,23 +146,59 @@ export default function LizaQuest() {
             aria-valuemax={100}
             aria-label="Уровень доверия"
           >
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-secondary transition-[width] duration-700 ease-out"
-              style={{ width: `${trust}%` }}
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-primary to-secondary shadow-[0_0_12px_hsl(var(--primary)/0.6)]"
+              initial={false}
+              animate={{ width: `${trust}%` }}
+              transition={{ type: "spring", stiffness: 60, damping: 14 }}
             />
           </div>
         </div>
 
         {/* Card */}
-        <main className="glass-card relative overflow-hidden p-5 sm:p-7">
-          {granted && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-card/95" role="status">
-              <CheckCircle2 size={44} className="text-primary" />
-              <p className="mt-3 font-mono text-sm font-medium tracking-wide text-primary">ACCESS GRANTED</p>
-              <p className="mt-1 text-sm text-muted-foreground">Фактор подтверждён</p>
-            </div>
-          )}
-          <div key={step}>
+        <motion.main animate={shake} className="glass-card relative overflow-hidden p-5 sm:p-7">
+          <AnimatePresence>
+            {granted && (
+              <motion.div
+                className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-card/95"
+                role="status"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="relative">
+                  <motion.span
+                    className="absolute inset-0 rounded-full border-2 border-primary"
+                    initial={{ scale: 1, opacity: 0.8 }}
+                    animate={{ scale: 2.4, opacity: 0 }}
+                    transition={{ duration: 0.9, ease: "easeOut" }}
+                  />
+                  <motion.div initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 300, damping: 15 }}>
+                    <CheckCircle2 size={48} className="text-primary" />
+                  </motion.div>
+                </div>
+                <motion.p
+                  className="mt-4 font-mono text-sm font-medium tracking-[0.2em] text-primary"
+                  initial={{ opacity: 0, letterSpacing: "0.6em" }}
+                  animate={{ opacity: 1, letterSpacing: "0.2em" }}
+                  transition={{ delay: 0.15, duration: 0.5 }}
+                >
+                  ACCESS GRANTED
+                </motion.p>
+                <motion.p className="mt-1 text-sm text-muted-foreground" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}>
+                  Фактор подтверждён
+                </motion.p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
+          >
             {step === "login" && <LoginStep {...props} />}
             {step === "passwordExpired" && <PasswordExpiredStep {...props} />}
             {step === "kba" && <KbaStep {...props} />}
@@ -154,8 +210,9 @@ export default function LizaQuest() {
             {step === "biometric" && <BiometricStep {...props} />}
             {step === "pam" && <PamStep {...props} />}
             {step === "final" && <FinalStep />}
-          </div>
-        </main>
+          </motion.div>
+          </AnimatePresence>
+        </motion.main>
 
         {/* Early QR scan notice */}
         {state.hwKeyScanned && state.step < STEPS.findIndex((s) => s.id === "hardwareKey") && (
@@ -169,11 +226,20 @@ export default function LizaQuest() {
           <section className="mt-5" aria-label="Журнал аудита">
             <p className="mb-1.5 text-xs text-muted-foreground">Журнал аудита</p>
             <div className="rounded-lg border border-border bg-background/50 p-3 font-mono text-[0.68rem] leading-relaxed text-muted-foreground">
-              {state.audit.slice(-4).map((l, i) => (
-                <div key={i} className={l.includes("FAIL") || l.includes("DENIED") ? "text-destructive/80" : undefined}>
-                  {l}
-                </div>
-              ))}
+              <AnimatePresence initial={false}>
+                {state.audit.slice(-4).map((l, i, arr) => (
+                  <motion.div
+                    key={`${state.audit.length - arr.length + i}-${l}`}
+                    layout
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0 }}
+                    className={l.includes("FAIL") || l.includes("DENIED") ? "text-destructive/80" : undefined}
+                  >
+                    {l}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           </section>
         )}
@@ -213,6 +279,29 @@ export default function LizaQuest() {
             </div>
           </section>
         )}
+      </div>
+    </div>
+    </MotionConfig>
+  );
+}
+
+const BOOT_LINES = [
+  "establishing secure channel…",
+  "TLS 1.3 handshake ✓",
+  `resolving tenant ${config.meta.tenant} ✓`,
+  "loading identity policies ✓",
+  "subject: birthday_girl",
+];
+
+function BootSplash() {
+  return (
+    <div className="flex min-h-[100dvh] items-center justify-center px-6">
+      <div className="w-full max-w-xs font-mono text-xs leading-relaxed text-muted-foreground">
+        {BOOT_LINES.map((l, i) => (
+          <motion.div key={i} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + i * 0.4 }}>
+            <span className="text-primary">›</span> {l}
+          </motion.div>
+        ))}
       </div>
     </div>
   );

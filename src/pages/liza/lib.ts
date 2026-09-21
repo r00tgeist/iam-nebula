@@ -66,6 +66,35 @@ export const matchesKeyword = (input: string, keywords: string[]) => {
   return v.length > 0 && keywords.some((k) => v.includes(norm(k)));
 };
 
+const MONTHS = ["янв", "фев", "мар", "апр", "ма", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+
+/** accepts 04.06.2021, 4/6/21, 040621, 04062021, «4 июня 2021», «4 июня» */
+export function dateMatches(input: string, day: number, month: number, year: number) {
+  const v = norm(input);
+  if (!v) return false;
+  const yearOk = (y?: number) => y === undefined || y === year || y === year % 100;
+  const monthIdx = MONTHS.findIndex((m, i) => (i === 4 ? /(^|\s|\d)ма[йяе]/.test(v) : v.includes(m)));
+  if (monthIdx >= 0) {
+    const nums = v.match(/\d+/g)?.map(Number) ?? [];
+    return nums[0] === day && monthIdx + 1 === month && yearOk(nums[1]);
+  }
+  const chunks = v.match(/\d+/g) ?? [];
+  if (chunks.length === 1 && (chunks[0].length === 6 || chunks[0].length === 8)) {
+    const c = chunks[0];
+    return +c.slice(0, 2) === day && +c.slice(2, 4) === month && yearOk(+c.slice(4));
+  }
+  const n = chunks.map(Number);
+  return n.length >= 2 && n[0] === day && n[1] === month && yearOk(n[2]);
+}
+
+export function daysSince(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const start = Date.UTC(y, m - 1, d);
+  const now = new Date();
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((today - start) / 86_400_000);
+}
+
 export const timeStamp = () => {
   const d = new Date();
   return d.toTimeString().slice(0, 8);

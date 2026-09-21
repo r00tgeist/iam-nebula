@@ -21,7 +21,7 @@ export const config = {
     title: "Вход в систему",
     subtitle: "Для доступа к подарку требуется аутентификация.",
     usernames: ["лизон", "любимый лизон", "лиза", "liza", "lizon"],
-    usernameHint: "Подсказка: как ты записана у меня в телефоне.",
+    usernameHint: "Подсказка: как тебя называю я.",
     passwords: ["сергеич", "сергеевич", "sergeich"],
     passwordHint: "Подсказка: как ты меня зовёшь.",
   },
@@ -43,33 +43,39 @@ export const config = {
   /* 3. Контрольные вопросы (KBA) --------------------------------------- */
   kba: {
     title: "Контрольные вопросы",
-    subtitle: "Ответьте минимум на 2 из 3 вопросов.",
+    subtitle: "Уровень проверки: повышенный. Нужно ответить минимум на 2 из 3.",
     passCount: 2,
     questions: [
-      // засчитывается, если ответ СОДЕРЖИТ любое из ключевых слов
-      { q: "Кого мы видели за сеткой в горах?", answers: ["медвед", "мишк", "мишутк", "bear"] },
-      { q: "Куда уходит Аполлон, когда на нас обижен?", answers: ["ванн", "туалет"] },
-      { q: "На какой машине мы ездим?", answers: ["пассат", "passat", "cc", "сс", "фольксваген", "volkswagen", "vw"] },
-    ],
+      // type "date": любой формат даты — 04.06.2021, 4.6.21, «4 июня 2021»
+      { type: "date", q: "Когда ты впервые выдала мне доступ?", day: 4, month: 6, year: 2021 },
+      // type "daysSince": считает дни от даты до сегодня, допуск ± tolerance
+      { type: "daysSince", q: "Сколько дней мы вместе на сегодня?", since: "2021-06-04", tolerance: 3 },
+      // type "keywords": засчитывается, если ответ содержит ВСЕ слова из allOf
+      { type: "keywords", q: "Как ты записана у меня в телефоне?", allOf: ["любим", "лизон"] },
+    ] as KbaQuestion[],
   },
 
   /* 4. CAPTCHA --------------------------------------------------------- */
   captcha: {
     title: "Подтвердите, что вы не робот",
-    subtitle: "Выберите все изображения, где есть мы.",
-    // Ровно 9 плиток. src — фото из public/liza/, emoji + caption — плитка-обманка.
-    images: [
-      { src: "/liza/decoy-apollo.jpg", isUs: false },
-      { src: "/liza/us-1.jpg", isUs: true },
-      { emoji: "🚗", caption: "Passat", isUs: false },
-      { emoji: "🐻", caption: "медведь без нас", isUs: false },
-      { src: "/liza/us-2.jpg", isUs: true },
-      { emoji: "🏔️", caption: "просто горы", isUs: false },
-      { src: "/liza/us-3.jpg", isUs: true },
-      { emoji: "🤖", caption: "робот", isUs: false },
-      { emoji: "💃", caption: "эщкэрэ", isUs: false },
-    ] as CaptchaTile[],
-    failHint: "Не все выбраны или выбрано лишнее. Аполлон бы справился лучше.",
+    // Фото режется на сетку 4×4. Клетки: 0–3 первая строка, 4–7 вторая, 8–11 третья, 12–15 четвёртая.
+    // required — обязательно выбрать; optional — можно выбрать или нет; остальные выбирать нельзя.
+    rounds: [
+      {
+        image: "/liza/decoy-apollo.jpg",
+        prompt: "Аполлоном",
+        required: [5, 6, 8, 9, 10, 13, 14],
+        optional: [4, 7, 11, 12, 15],
+        failHint: "Аполлон обиделся, что его не узнали. Попробуй ещё раз.",
+      },
+      {
+        image: "/liza/us-2.jpg",
+        prompt: "самым красивым человеком",
+        required: [5, 8, 9],
+        optional: [4, 10, 12, 13, 14],
+        failHint: "Подсказка: это не сергеич.",
+      },
+    ] as CaptchaRound[],
   },
 
   /* 5. Графический ключ ------------------------------------------------ */
@@ -123,7 +129,7 @@ export const config = {
   /* 10. Привилегированный доступ (PAM) --------------------------------- */
   pam: {
     title: "Запрос привилегированного доступа",
-    resource: "Подарок на день рождения",
+    resource: "Mystery box (засекречено)",
     reason: "День рождения",
     duration: "24 часа",
     secondApprover: "Второй согласующий: Аполлон. Одобрено (потребовал корм)",
@@ -134,14 +140,22 @@ export const config = {
     title: "Доступ предоставлен",
     text:
       "с днём рождения, лизон 💃\n\n" +
-      "4 июня 2021 ты впервые выдала мне доступ. за пять лет ни разу его не отозвала, и это моя самая ценная привилегия\n\n" +
-      "последний ресурс этой сессии — твой подарок. он пахнет лучше любого журнала аудита\n\n" +
-      "забери его у администратора",
+      "4 июня 2021 ты впервые выдала мне доступ. за пять лет ни разу его не отозвала, и это моя самая ценная привилегия",
+    boxLabel: "Нажми, чтобы расшифровать",
+    revealTitle: "Mystery box",
+    revealText:
+      "содержимое засекречено. уровень доступа: только физический\n\n" +
+      "бокс ждёт тебя у администратора",
     signature: "сергеич",
   },
 };
 
-export type CaptchaTile = { src?: string; emoji?: string; caption?: string; isUs: boolean };
+export type CaptchaRound = { image: string; prompt: string; required: number[]; optional: number[]; failHint: string };
+
+export type KbaQuestion =
+  | { type: "date"; q: string; day: number; month: number; year: number }
+  | { type: "daysSince"; q: string; since: string; tolerance: number }
+  | { type: "keywords"; q: string; allOf: string[] };
 
 export type PasswordRule =
   | { type: "minLength"; value: number; label: string }
