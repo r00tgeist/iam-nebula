@@ -31,12 +31,15 @@ export const config = {
     title: "Срок действия пароля истёк",
     subtitle: "Согласно политике безопасности, придумайте новый пароль.",
     // type: "minLength" | "contains" | "notContains" | "emoji" | "digit"
+    // Правила открываются по одному, как в Password Game: следующее видно только когда выполнены все предыдущие.
     rules: [
       { type: "minLength", value: 12, label: "Не короче хвоста мейнкуна (12 символов)" },
-      { type: "contains", anyOf: ["аполлон", "аполон", "apollo", "apolon"], label: "Содержит имя кота (Аполлон тоже администратор)" },
       { type: "contains", anyOf: ["5"], label: "Содержит, сколько лет мы вместе" },
+      { type: "contains", anyOf: ["аполлон", "аполон", "apollo", "apolon"], label: "Содержит имя второго администратора (он рыжий)" },
       { type: "contains", anyOf: ["💃", "🕺"], label: "Содержит танцующий эмодзи 💃 или 🕺" },
-      { type: "notContains", anyOf: ["12345", "qwerty", "пароль"], label: "Не содержит «12345», «qwerty» или «пароль»" },
+      { type: "contains", anyOf: ["нозил"], label: "Содержит твоё имя задом наперёд" },
+      { type: "digitSum", value: 13, label: "Сумма всех цифр — ровно 13. Как у 04.06.21" },
+      { type: "notContains", anyOf: ["12345", "qwerty", "пароль"], label: "Не содержит «12345», «qwerty» или «пароль». Мы же не дети" },
     ] as PasswordRule[],
   },
 
@@ -133,6 +136,8 @@ export const config = {
     reason: "День рождения",
     duration: "24 часа",
     secondApprover: "Второй согласующий: Аполлон. Одобрено (потребовал корм)",
+    breakGlassTitle: "Аварийный доступ",
+    breakGlassText: "Сессия одобрена, но ресурс за стеклом. Разбей его.",
   },
 
   /* 11. Финал — ЗАГЛУШКА, заполним позже ------------------------------- */
@@ -162,4 +167,5 @@ export type PasswordRule =
   | { type: "contains"; anyOf: string[]; label: string }
   | { type: "notContains"; anyOf: string[]; label: string }
   | { type: "emoji"; label: string }
-  | { type: "digit"; label: string };
+  | { type: "digit"; label: string }
+  | { type: "digitSum"; value: number; label: string };

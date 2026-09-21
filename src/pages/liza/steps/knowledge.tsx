@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent as RPointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from "react";
 import { Check, Eye, EyeOff } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -77,14 +77,25 @@ function ruleOk(rule: PasswordRule, value: string) {
       return EMOJI_RE.test(value);
     case "digit":
       return /\d/.test(value);
+    case "digitSum":
+      return [...value.replace(/\D/g, "")].reduce<number>((a, d) => a + Number(d), 0) === rule.value;
   }
 }
 
 export function PasswordExpiredStep({ onPass }: StepProps) {
   const c = config.passwordExpired;
   const [pw, setPw] = useState("");
+  const [unlocked, setUnlocked] = useState(1); // how many rules are revealed
   const results = c.rules.map((r) => ruleOk(r, pw));
-  const allOk = results.every(Boolean);
+  const allOk = unlocked >= c.rules.length && results.every(Boolean);
+
+  // reveal the next rule once every visible one is satisfied (never hides already revealed rules)
+  const visibleOk = results.slice(0, unlocked).every(Boolean);
+  useEffect(() => {
+    if (visibleOk && unlocked < c.rules.length && pw.length > 0) setUnlocked((u) => u + 1);
+  }, [visibleOk, unlocked, pw, c.rules.length]);
+
+  const shown = c.rules.slice(0, unlocked).map((r, i) => ({ r, i, ok: results[i] })).reverse();
 
   return (
     <form
@@ -95,20 +106,34 @@ export function PasswordExpiredStep({ onPass }: StepProps) {
     >
       <StepHeader title={c.title} subtitle={c.subtitle} />
       <Field id="lz-newpass" label="Новый пароль" value={pw} onChange={(e) => setPw(e.target.value)} autoFocus />
-      <ul className="mt-4 space-y-2" aria-live="polite">
-        {c.rules.map((r, i) => (
-          <li key={i} className={cn("flex items-start gap-2.5 text-sm", results[i] ? "text-foreground" : "text-muted-foreground")}>
-            <span
+      <p className="mt-2 flex justify-between font-mono text-[0.68rem] text-muted-foreground">
+        <span>символов: {[...pw].length}</span>
+        <span>
+          правил: {Math.min(unlocked, c.rules.length)}/{c.rules.length}
+        </span>
+      </p>
+      <ul className="mt-3 space-y-2" aria-live="polite">
+        <AnimatePresence initial={false}>
+          {shown.map(({ r, i, ok }) => (
+            <motion.li
+              key={i}
+              layout
+              initial={{ opacity: 0, y: -10, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ type: "spring", stiffness: 380, damping: 28 }}
               className={cn(
-                "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
-                results[i] ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40",
+                "rounded-lg border px-3 py-2 text-sm",
+                ok ? "border-primary/30 bg-primary/5 text-foreground" : "border-destructive/40 bg-destructive/10 text-foreground",
               )}
             >
-              {results[i] ? <Check size={11} strokeWidth={3} /> : null}
-            </span>
-            <span>{r.label}</span>
-          </li>
-        ))}
+              <div className="mb-0.5 flex items-center gap-2 font-mono text-[0.65rem] uppercase tracking-wider">
+                <span className={ok ? "text-primary" : "text-destructive"}>{ok ? "✓" : "✗"}</span>
+                <span className="text-muted-foreground">правило {i + 1}</span>
+              </div>
+              {r.label}
+            </motion.li>
+          ))}
+        </AnimatePresence>
       </ul>
       <PrimaryButton type="submit" disabled={!allOk} className="mt-6">
         Сменить пароль

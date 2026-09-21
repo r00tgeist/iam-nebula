@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
 import { Bell, Camera, CheckCircle2, Fingerprint, KeyRound, ShieldCheck, Usb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -398,9 +398,108 @@ export function PamStep({ onPass }: StepProps) {
         ))}
         {!complete && <li className="pl-7 text-sm text-muted-foreground motion-safe:animate-pulse">Обработка…</li>}
       </ol>
-      <PrimaryButton className="mt-7" disabled={!complete} onClick={() => onPass("PAM_SESSION_START jit=true")}>
-        Открыть сессию
-      </PrimaryButton>
+      <AnimatePresence>
+        {complete && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-7">
+            <BreakGlass onBroken={() => onPass("BREAK_GLASS_USED emergency_access=granted")} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------- break-glass */
+// crack paths drawn in a 200x120 box, revealed progressively with each tap
+const CRACKS = [
+  ["M100 60 L70 30 L55 5", "M100 60 L135 38 L160 8", "M100 60 L78 88 L60 118"],
+  ["M100 60 L140 78 L195 92", "M100 60 L62 58 L5 64", "M70 30 L40 40", "M135 38 L150 60 L185 55"],
+  ["M100 60 L118 100 L125 118", "M62 58 L30 90 L10 115", "M140 78 L160 110", "M55 5 L20 20", "M160 8 L190 30"],
+];
+const SHARDS = Array.from({ length: 10 }, (_, i) => ({
+  pts: `${10 + (i % 5) * 38},${i < 5 ? 5 : 60} ${40 + (i % 5) * 38},${i < 5 ? 10 : 70} ${25 + (i % 5) * 38},${i < 5 ? 55 : 115}`,
+  x: (i % 5 - 2) * 60 + (Math.random() - 0.5) * 30,
+  y: (i < 5 ? -1 : 1) * (60 + Math.random() * 60),
+  r: (Math.random() - 0.5) * 220,
+}));
+
+function BreakGlass({ onBroken }: { onBroken: () => void }) {
+  const c = config.pam;
+  const [hits, setHits] = useState(0);
+  const broken = hits >= 3;
+  const jolt = useAnimationControls();
+
+  const hit = () => {
+    if (broken) return;
+    navigator.vibrate?.(hits === 2 ? [40, 30, 80] : 25);
+    const n = hits + 1;
+    setHits(n);
+    jolt.start({ x: [0, -6, 6, -3, 0], transition: { duration: 0.25 } });
+    if (n >= 3) setTimeout(onBroken, prefersReducedMotion() ? 200 : 900);
+  };
+
+  return (
+    <div className="text-center">
+      <p className="font-mono text-[0.68rem] uppercase tracking-widest text-destructive">{c.breakGlassTitle}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{c.breakGlassText}</p>
+      <motion.button
+        type="button"
+        onClick={hit}
+        aria-label={broken ? "Стекло разбито" : `Разбить стекло, осталось ударов: ${3 - hits}`}
+        className="relative mx-auto mt-4 block aspect-[5/3] w-full max-w-[280px] rounded-md border-2 border-destructive/70 bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
+        animate={jolt}
+      >
+        {!broken && (
+          <>
+            <svg viewBox="0 0 200 120" className="absolute inset-0 h-full w-full" aria-hidden>
+              <defs>
+                <linearGradient id="lzglass" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stopColor="white" stopOpacity="0.18" />
+                  <stop offset="0.5" stopColor="white" stopOpacity="0.02" />
+                  <stop offset="1" stopColor="white" stopOpacity="0.12" />
+                </linearGradient>
+              </defs>
+              <rect x="0" y="0" width="200" height="120" fill="url(#lzglass)" />
+              {CRACKS.slice(0, hits).flat().map((d, i) => (
+                <motion.path
+                  key={d}
+                  d={d}
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                  initial={{ pathLength: 0, opacity: 0.9 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.18, delay: (i % 5) * 0.02 }}
+                />
+              ))}
+            </svg>
+            <span className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="rounded bg-destructive px-2 py-1 font-mono text-xs font-bold tracking-widest text-destructive-foreground">
+                BREAK GLASS
+              </span>
+              <span className="mt-2 font-mono text-[0.65rem] text-foreground/70">ударов: {hits}/3</span>
+            </span>
+          </>
+        )}
+        {broken && (
+          <svg viewBox="0 0 200 120" className="absolute inset-0 h-full w-full overflow-visible" aria-hidden>
+            {SHARDS.map((sh, i) => (
+              <motion.polygon
+                key={i}
+                points={sh.pts}
+                fill="white"
+                fillOpacity={0.22}
+                stroke="white"
+                strokeOpacity={0.6}
+                initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+                animate={{ x: sh.x, y: sh.y, rotate: sh.r, opacity: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              />
+            ))}
+          </svg>
+        )}
+      </motion.button>
     </div>
   );
 }
