@@ -37,7 +37,8 @@ export const config = {
       { type: "contains", anyOf: ["5"], label: "Содержит, сколько лет мы вместе" },
       { type: "contains", anyOf: ["аполлон", "аполон", "apollo", "apolon"], label: "Содержит имя второго администратора (он рыжий)" },
       { type: "contains", anyOf: ["💃", "🕺"], label: "Содержит танцующий эмодзи 💃 или 🕺" },
-      { type: "contains", anyOf: ["нозил"], label: "Содержит твоё имя задом наперёд" },
+      // лизон / лиза / елизавета задом наперёд, кириллицей и латиницей
+      { type: "contains", anyOf: ["нозил", "азил", "атевазиле", "nozil", "azil", "atevazile", "atavezile"], label: "Содержит твоё имя задом наперёд" },
       { type: "digitSum", value: 13, label: "Сумма всех цифр — ровно 13. Как у 04.06.21" },
       { type: "notContains", anyOf: ["12345", "qwerty", "пароль"], label: "Не содержит «12345», «qwerty» или «пароль». Мы же не дети" },
     ] as PasswordRule[],
